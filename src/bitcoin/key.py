@@ -657,10 +657,15 @@ def generate_key_pair(secret=None, compressed=True):
     P = d.get_pubkey()
     return d, P
 
-def generate_bip340_key_pair():
+def generate_bip340_key_pair(secret=None):
     """Convenience function to generate a BIP0340 private-public key pair."""
     d = ECKey()
-    d.generate()
+
+    if (secret):
+        d.set(secret)
+    else:
+        d.generate()
+
     P = d.get_pubkey()
     if P.get_y()%2 != 0:
         d.negate()

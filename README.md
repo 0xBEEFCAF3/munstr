@@ -15,4 +15,4 @@ Nostr is used as the communication protocol. It's how signers talk to the coordi
 
 In addition to the libraries listed in `requirements.txt`, this project also uses:
 
-- Code from the Bitcoin Optech Taproot & Schnorr workshop, specifically the Python test framework. The `test_framework ` folder has been brought into our project and renamed to `src/bitcoin`.
+- Code from the Bitcoin Optech Taproot & Schnorr workshop, specifically the Python test framework. The `test_framework` folder has been brought into our project and renamed to `src/bitcoin`.
