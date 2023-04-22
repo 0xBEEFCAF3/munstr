@@ -28,7 +28,7 @@ def init_relay_manager(relay_manager: RelayManager, author_pks: list[str]):
     relay_manager.open_connections({"cert_reqs": ssl.CERT_NONE})
 
     # wait a moment for a connection to open to each relay
-    time.sleep(1.25)
+    time.sleep(1.5)
 
     request = [ClientMessageType.REQUEST, subscription_id]
     request.extend(filters.to_json_array())
