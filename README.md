@@ -1,9 +1,7 @@
 <br/>
 
 <div align="center" style="margin: 30px;">
-<a href="https://refine.dev/">
-  <img src="https://raw.githubusercontent.com/0xBEEFCAF3/munstr/assets/images/munstr-logo.png"   style="width:250px;" align="center" /> 
-</a>
+  <img src="https://raw.githubusercontent.com/0xBEEFCAF3/munstr/assets/images/munstr-logo.png" style="width:250px;" align="center" /> 
 <br />
 <br />
 
