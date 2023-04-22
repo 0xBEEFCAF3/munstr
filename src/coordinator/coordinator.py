@@ -4,7 +4,7 @@ import time
 
 from src.utils.nostr_utils import add_relays, construct_and_publish_event, generate_nostr_message, init_relay_manager, read_nsec, read_public_keys
 from src.utils.payload import is_valid_json, is_valid_payload, PayloadKeys
-from src.coordinator.wallet import add_xpub, create_wallet, is_valid_command, get_address, start_spend
+from src.coordinator.wallet import add_xpub, create_wallet, is_valid_command, get_address, save_nonce, start_spend
 from src.coordinator.db import DB
 
 header = """
@@ -23,9 +23,11 @@ header = """
 # Map application commands to the corresponding methods
 COMMAND_MAP = {
     'address':  get_address,
+    'nonce':    save_nonce,
     'spend':    start_spend,
     'wallet':   create_wallet,
     'xpub':     add_xpub
+    # TODO add 'sign'
 }
 def setup_logging():
     logging.basicConfig()
@@ -80,15 +82,15 @@ def run():
 
         # skip if this event is old
         event_timestamp = json_payload[PayloadKeys.TIMESTAMP.value]
-        if (event_timestamp < timestamp_filter):
-            continue
+        # if (event_timestamp < timestamp_filter):
+        #     continue
 
         #
         # Handle the command that's in the event
         #
         try:
             logging.info('[coordinator] Handling command of type: %s', command)
-            result = COMMAND_MAP[command](json_payload['payload'])
+            result = COMMAND_MAP[command](json_payload['payload'], db)
 
             # package the result into a response
             ref_id = json_payload[PayloadKeys.REQUEST_ID.value]
@@ -103,6 +105,10 @@ def run():
                     'address':      result[0],
                     'cmap':         result[1],
                     'pubkey_agg':   result[2]
+                }
+            elif command == "spend":
+                response_payload = {
+                    'spend_request_id': result
                 }
 
             nostr_response = generate_nostr_message(command=command, ref_id=ref_id, payload=response_payload)

@@ -10,13 +10,10 @@ from src.coordinator.mempool_space_client import get_transaction
 
 COMMANDS = ['address', 'spend', 'wallet', 'xpub']
 
-# temporarily keep signer xpubs in memory
-signer_xpubs = []
-
 def is_valid_command(command: str):
     return command in COMMANDS
 
-def create_wallet(payload: dict):
+def create_wallet(payload: dict, db):
     if (not 'quorum' in payload):
         raise Exception("[wallet] Cannot create a wallet without the 'quorum' property")
 
@@ -26,9 +23,11 @@ def create_wallet(payload: dict):
 
     new_wallet_id = str(uuid.uuid4())
 
-    # TODO add to a database
+    if (db.add_wallet(new_wallet_id, quorum)):
+        logging.info("[wallet] Saved new wallet ID %s to the database", new_wallet_id)
     return new_wallet_id
 
+# Get a wallet ID from the provided payload. Throw an error if it is missing
 def get_wallet_id(payload: dict):
     if (not 'wallet_id' in payload):
         raise Exception("[wallet] Cannot add an xpub without the 'wallet_id' property")
@@ -36,30 +35,29 @@ def get_wallet_id(payload: dict):
     wallet_id = payload['wallet_id']
     return wallet_id
 
-def add_xpub(payload: dict):
+def add_xpub(payload: dict, db):
     if (not 'xpub' in payload):
         raise Exception("[wallet] Cannot add an xpub without the 'xpub' property")
 
     xpub = payload['xpub']
     wallet_id = get_wallet_id(payload)
 
-    # add xpub to the end of the in memory list of xpubs
-    signer_xpubs.append(xpub)
-    logging.info('[wallet] Added xpub to wallet %s', wallet_id)
+    if (db.add_xpub(wallet_id, xpub)):
+        logging.info('[wallet] Added xpub to wallet %s', wallet_id)
 
-def get_address(payload: dict):
-    # TODO get address at a specific index. For now hardcode this to 0
-    # index = payload['index']
-    index = 0
+def get_address(payload: dict, db):
+    index = payload['index']
     wallet_id = get_wallet_id(payload)
     ec_public_keys = []
 
-    if (signer_xpubs == []):
+    # wallet = db.get_wallet(wallet_id)
+    wallet_xpubs = db.get_xpubs(wallet_id)
+
+    if (wallet_xpubs == []):
         raise Exception('[wallet] No xpubs to create an address from!')
 
-    for xpub in signer_xpubs:
-        logging.info(xpub)
-        bip32_node = BIP32.from_xpub(xpub)
+    for xpub in wallet_xpubs:
+        bip32_node = BIP32.from_xpub(xpub['xpub'])
         public_key = bip32_node.get_pubkey_from_path(f"m/{index}")
 
         # The method to generate and aggregate MuSig key expects ECPubKey objects
@@ -82,7 +80,8 @@ def get_address(payload: dict):
 
     return [p2tr_address, c_map_hex, pubkey_agg.get_bytes().hex()]
 
-def start_spend(payload: dict):
+# Initiates a spending transaction
+def start_spend(payload: dict, db):
     # create an ID for this request
     spend_request_id = str(uuid.uuid4())
 
@@ -100,14 +99,28 @@ def start_spend(payload: dict):
     destination_address = payload['new_address']
 
     # Use mempool.space to look up the scriptpubkey for the output being spent
-    # Can probably find a library to do this so we don't have to make any external calls
+    # Could probably find a library to do this so we don't have to make any external calls
     tx = get_transaction(txid)
     script_pub_key = tx['vout'][output_index]['scriptpubkey']
 
-    # TODO package up the txid, output_index, script_pub_key, and destination_address up
-    # and persist, or somehow make available to signers
-    # For now, just return the request ID
+    # Persist to the db so other signers can easily retrieve this information
+    if (db.add_spend_request(txid,
+                             output_index,
+                             script_pub_key,
+                             spend_request_id,
+                             destination_address)):
+        logging.info('[wallet] Saved spend request %s to the database', spend_request_id)
+
     return spend_request_id
+
+def save_nonce(payload: dict, db):
+    if (not 'nonce' in payload):
+        raise Exception("[wallet] Cannot save a nonce without the 'nonce' property")
+    if (not 'spend_request_id' in payload):
+        raise Exception("[wallet] Cannot save a nonce without the 'spend_request_id' property")
+
+    nonce = payload['nonce']
+    spend_request_id = payload['spend_request_id']
 
 
 
