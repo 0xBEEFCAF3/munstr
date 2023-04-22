@@ -1,7 +1,7 @@
 <br/>
 
 <div align="center" style="margin: 30px;">
-  <img src="https://raw.githubusercontent.com/0xBEEFCAF3/munstr/assets/images/munstr-logo.png" style="width:250px;" align="center" /> 
+  <img src="https://github.com/0xBEEFCAF3/munstr/blob/main/assets/images/munstr-logo.png?raw=true" style="width:250px;" align="center" /> 
 <br />
 <br />
 
