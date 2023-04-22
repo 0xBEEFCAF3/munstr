@@ -1,3 +1,4 @@
 bip32
 nostr
 uuid
+colorama
