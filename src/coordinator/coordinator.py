@@ -2,7 +2,7 @@ import json
 import logging
 import time
 
-from src.utils.nostr_utils import add_relays, init_relay_manager, read_nsec, read_public_keys
+from src.utils.nostr_utils import add_relays, construct_and_publish_event, generate_nostr_message, init_relay_manager, read_nsec, read_public_keys
 from src.utils.payload import is_valid_json, is_valid_payload, PayloadKeys
 from src.coordinator.wallet import add_xpub, create_wallet, is_valid_command, get_address, start_spend
 
@@ -83,7 +83,27 @@ def run():
         # Handle the command that's in the event
         #
         try:
+            logging.info('[coordinator] Handling command of type: %s', command)
             result = COMMAND_MAP[command](json_payload['payload'])
+
+            # package the result into a response
+            ref_id = json_payload[PayloadKeys.REQUEST_ID.value]
+            response_payload = {}
+
+            if command == "wallet":
+                response_payload = {
+                    'wallet_id': result[0]
+                }
+            elif command == "address":
+                response_payload = {
+                    'address':      result[0],
+                    'cmap':         result[1],
+                    'pubkey_agg':   result[2]
+                }
+
+            nostr_response = generate_nostr_message(command=command, ref_id=ref_id, payload=response_payload)
+            construct_and_publish_event(nostr_response, nostr_private_key, relay_manager)
+
         except Exception as e:
             logging.error('Something went wrong!')
             print(e)

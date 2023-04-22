@@ -1,9 +1,10 @@
 import logging
 import uuid
+from bip32 import BIP32
 
 from src.bitcoin.musig import generate_musig_key
 from src.bitcoin.address import program_to_witness
-from src.bitcoin.key import generate_bip340_key_pair
+from src.bitcoin.key import ECPubKey
 from src.bitcoin.messages import sha256
 from src.coordinator.mempool_space_client import get_transaction
 
@@ -35,7 +36,6 @@ def get_wallet_id(payload: dict):
     wallet_id = payload['wallet_id']
     return wallet_id
 
-# May have to simplify this and end up just taking a public key instead of an xpub
 def add_xpub(payload: dict):
     if (not 'xpub' in payload):
         raise Exception("[wallet] Cannot add an xpub without the 'xpub' property")
@@ -52,22 +52,35 @@ def get_address(payload: dict):
     # index = payload['index']
     index = 0
     wallet_id = get_wallet_id(payload)
+    ec_public_keys = []
 
-    # TODO BIP32 - derive public key from xpub
-    # uncomment the following lines to show that this method works when plain pubkeys
-    # are used
-    # privkey1, pubkey1 = generate_bip340_key_pair(sha256(b'key0'))
-    # c_map, pubkey_agg = generate_musig_key([pubkey1])
+    if (signer_xpubs == []):
+        raise Exception('[wallet] No xpubs to create an address from!')
 
-    c_map, pubkey_agg = generate_musig_key([signer_xpubs])
+    for xpub in signer_xpubs:
+        logging.info(xpub)
+        bip32_node = BIP32.from_xpub(xpub)
+        public_key = bip32_node.get_pubkey_from_path(f"m/{index}")
+
+        # The method to generate and aggregate MuSig key expects ECPubKey objects
+        ec_public_key = ECPubKey()
+        ec_public_key.set(public_key)
+        ec_public_keys.append(ec_public_key)
+
+    c_map, pubkey_agg = generate_musig_key(ec_public_keys)
     logging.info('[wallet] Aggregate public key: %s', pubkey_agg.get_bytes().hex())
 
     # Create a segwit v1 address (P2TR) from the aggregate key
     p2tr_address = program_to_witness(0x01, pubkey_agg.get_bytes())
     logging.info('[wallet] Returning P2TR address %s', p2tr_address)
 
-    # TODO also return the challenges/coefficients?
-    return [p2tr_address]
+    # convert the challenges/coefficients to hex so they can be returned to the signer
+    c_map_hex = {}
+    for key, value in c_map.items():
+        k = key.get_bytes().hex()
+        c_map_hex[k] = value.hex()
+
+    return [p2tr_address, c_map_hex, pubkey_agg.get_bytes().hex()]
 
 def start_spend(payload: dict):
     # create an ID for this request

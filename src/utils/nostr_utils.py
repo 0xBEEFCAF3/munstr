@@ -2,12 +2,15 @@ import json
 import logging
 import ssl
 import time
+import uuid
 
 from nostr.event import  Event, EventKind
 from nostr.filter import Filter, Filters
 from nostr.key import PrivateKey
 from nostr.message_type import ClientMessageType
 from nostr.relay_manager import RelayManager
+
+from src.utils.payload import PayloadKeys
 
 NOSTR_RELAYS = ["wss://nostr-pub.wellorder.net", "wss://relay.damus.io"]
 
@@ -17,6 +20,30 @@ def add_relays():
 
     logging.info("[nostr] Added the following relay(s): %s", NOSTR_RELAYS)
     return relay_manager
+
+def construct_and_publish_event(payload: dict, private_key: PrivateKey, relay_manager: RelayManager):
+    public_key = private_key.public_key
+    event = Event(content=json.dumps(payload), public_key=public_key.hex())
+
+    private_key.sign_event(event)
+    relay_manager.publish_event(event)
+
+    logging.info('[nostr] Published event for the %s command', payload[PayloadKeys.COMMAND.value])
+
+
+# Used to generate both requests and responses
+def generate_nostr_message(command: str, req_id=str(uuid.uuid4()), ref_id=None, payload={}):
+    message = {
+        PayloadKeys.COMMAND.value:      command,
+        PayloadKeys.REQUEST_ID.value:   req_id,
+        PayloadKeys.PAYLOAD.value:      payload,
+        PayloadKeys.TIMESTAMP.value:    int(time.time())
+    }
+
+    if (ref_id != None):
+        message['ref_id'] = ref_id
+
+    return message
 
 def init_relay_manager(relay_manager: RelayManager, author_pks: list[str]):
     # set up relay subscription
