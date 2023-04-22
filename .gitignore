@@ -148,3 +148,6 @@ tags
 
 # Custom stuff
 db.json
+
+# Lil' Stevie Jobs
+.DS_Store
