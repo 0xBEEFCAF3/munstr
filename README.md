@@ -66,7 +66,14 @@ Coordinators act as a mediator between digital signers and wallets.  The coordin
 
 ### Running the coordinator
 
-`python3 start_coordinator.py`
+1. Initialize the persistent storage: Create a `src/coordinator/db.json` file from the provided `db.template.json`.
+    ```
+    cp src/coordinator/db.template.json src/coordinator/db.json
+    ```
+2. Start the coordinator
+    ```
+    python3 start_coordinator.py
+    ```
 
 ### Running a signer
 
