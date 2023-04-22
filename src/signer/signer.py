@@ -1,5 +1,7 @@
 import logging
 
+from colorama import Fore
+
 from src.utils.nostr_utils import add_relays, init_relay_manager, read_nsec, read_public_keys
 
 header = """
@@ -17,7 +19,7 @@ header = """
 def setup_logging():
     logging.basicConfig()
     logging.getLogger().setLevel(logging.INFO)
-    logging.info(header)
+    logging.info(Fore.RED + header)
 
 def run():
     setup_logging()

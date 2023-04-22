@@ -2,6 +2,8 @@ import json
 import logging
 import time
 
+from colorama import Fore
+
 from src.utils.nostr_utils import add_relays, construct_and_publish_event, generate_nostr_message, init_relay_manager, read_nsec, read_public_keys
 from src.utils.payload import is_valid_json, is_valid_payload, PayloadKeys
 from src.coordinator.wallet import add_xpub, create_wallet, is_valid_command, get_address, save_nonce, start_spend
@@ -32,7 +34,7 @@ COMMAND_MAP = {
 def setup_logging():
     logging.basicConfig()
     logging.getLogger().setLevel(logging.INFO)
-    logging.info(header)
+    logging.info(Fore.GREEN + header)
 
 def run():
     setup_logging()
