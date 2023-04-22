@@ -5,13 +5,32 @@ from bip32 import BIP32
 from src.bitcoin.musig import generate_musig_key
 from src.bitcoin.address import program_to_witness
 from src.bitcoin.key import ECPubKey
-from src.bitcoin.messages import sha256
+from src.bitcoin.messages import sha256, CTransaction, CTxIn, COutPoint, CTxOut
 from src.coordinator.mempool_space_client import get_transaction
 
 COMMANDS = ['address', 'spend', 'wallet', 'xpub']
 
+# in memory cache of transactions that are in the process of being spent
+spending_txs = {}
+
 def is_valid_command(command: str):
     return command in COMMANDS
+
+def create_spending_transaction(txid, output_index, destination_addr, amount_sats, version=1, nSequence=0):
+    spending_tx = CTransaction()
+    spending_tx.nVersion = version
+    spending_tx.nLockTime = 0
+
+    # input (only a single one is supported right now)
+    outpoint = COutPoint(int(txid, 16), output_index)
+    spending_tx.vin = [CTxIn(outpoint=outpoint, nSequence=nSequence)]
+
+    # output
+    script_pub_key = CBitcoinAddress(destination_addr).to_scriptPubKey()
+    spending_tx.vout = [CTxOut(nValue=amount_sats, scriptPubKey=script_pub_key)]
+
+    return (spending_tx, script_pub_key)
+
 
 def create_wallet(payload: dict, db):
     if (not 'quorum' in payload):
