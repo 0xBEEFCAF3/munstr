@@ -23,10 +23,16 @@ def generate_musig_key(pubkey_list):
 
     Returns a MuSig public key as defined in the MuSig paper."""
     pubkey_list_sorted = sorted([int.from_bytes(key.get_bytes(), 'big') for key in pubkey_list])
+
+    # Concatenate all the public keys together
     L = b''
     for px in pubkey_list_sorted:
         L += px.to_bytes(32, 'big')
+
+    # hash of all the public keys concatenated
     Lh = hashlib.sha256(L).digest()
+
+    # the MuSig coefficients. This prevents a key cancellation attack.
     musig_c = {}
     aggregate_key = 0
     for key in pubkey_list:

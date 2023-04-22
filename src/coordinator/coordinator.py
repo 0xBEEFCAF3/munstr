@@ -4,7 +4,7 @@ import time
 
 from src.utils.nostr_utils import add_relays, init_relay_manager, read_nsec, read_public_keys
 from src.utils.payload import is_valid_json, is_valid_payload, PayloadKeys
-from src.coordinator.wallet import create_wallet, is_valid_command
+from src.coordinator.wallet import add_xpub, create_wallet, is_valid_command, get_address, start_spend
 
 header = """
  ▄████▄   ▒█████   ▒█████   ██▀███  ▓█████▄  ██▓ ███▄    █  ▄▄▄     ▄▄▄█████▓ ▒█████   ██▀███  
@@ -21,7 +21,10 @@ header = """
 
 # Map application commands to the corresponding methods
 COMMAND_MAP = {
-    'wallet': create_wallet
+    'address':  get_address,
+    'spend':    start_spend,
+    'wallet':   create_wallet,
+    'xpub':     add_xpub
 }
 def setup_logging():
     logging.basicConfig()
