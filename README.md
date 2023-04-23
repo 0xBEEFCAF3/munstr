@@ -4,15 +4,11 @@
   <img src="https://github.com/0xBEEFCAF3/munstr/blob/main/assets/images/munstr-logo.png?raw=true" align="center" /> 
 <br />
 <br />
-
 </div>
 
-<br />
 
 <div align="center"><strong>Secure your Bitcoin with the Munstrous power of decentralized multi-signature technology</strong><br>🕸🕯 An open source Musig privacy based wallet 🕯🕸
-
 <br />
-
 </div>
 
 
@@ -25,9 +21,6 @@
 </div>
 
 <br/>
-(TODO: Flow chart could go here)
-
-
 
 ## What is Munstr?
 **Munstr** is a combination of Schnorr signature based **Musig** (multisignature) keys in a terminal based wallet using decentralized **Nostr** networks as a communication layer to facilitate a secure and encrypted method of transporting and digitally signing bitcoin transactions in a way that chain analysis cannot identify the nature and setup of the transaction data. To anyone observing the blockchain, Munstr transactions look like single key **Pay-to-Taproot** (P2TR) spends.
@@ -58,6 +51,12 @@ The Nostr decentralized network acts as a transport and communications layer for
 ### Coordinator 
 Coordinators act as a mediator between digital signers and wallets.  The coordinator facilitates digital signatures from each required (n-of-n) key signers and assists in broadcasting the fully signed transaction. 
 
+### Flow
+<div align="center" style="margin: 30px;">
+  <img src="https://github.com/0xBEEFCAF3/munstr/blob/main/assets/images/flow.png?raw=true" align="center" /> 
+<br />
+<br />
+</div>
 
 ## Getting started
 
@@ -93,13 +92,29 @@ In addition to the libraries listed in `requirements.txt`, this project also use
 
 ## Future goals
 
-- Integrate MuSig 2
+- MuSig 2 enhancements
+- More accurate transaction fee estimation
+- Better nostr encrypted DM support
+- Custom nostr relay servers
+- Custom nostr PSBT event types 
+- Node connectivity
+  - Sovereign TX lookup & broadcast
+- Seed Phrases & xpubs
+- Hardware Wallet support
+  - SeedSigner (Taproot incoming)
+  - Blockstream Jade
 
 
-## TeamMunster
+## TeamMunstr
 
-<a href="https://github.com/0xBEEFCAF3/munstr/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=0xBEEFCAF3/munstr" />
+<a href="https://github.com/0xBEEFCAF3">
+  <img src="https://avatars.githubusercontent.com/u/24356537?s=120&v=4" />
+</a>
+<a href="https://github.com/satsie">
+  <img src="https://avatars.githubusercontent.com/u/1823216?s=120&v=4" />
+</a>
+<a href="https://github.com/ronaldstoner">
+  <img src="https://avatars.githubusercontent.com/u/6909088?s=120&v=4" />
 </a>
 
 
