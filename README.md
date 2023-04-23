@@ -88,8 +88,27 @@ Coordinators act as a mediator between digital signers and wallets.  The coordin
 
 ### Running a signer
 
-`python3 start_signer.py`
+```
+python3 start_signer.py
+```
 
+
+Possible arguments:
+
+- `--wallet_id`: The coordinator persists wallets by ID with some associated information. Default is none.
+- `--key_seed`: An optional seed to use when initializing the signer's keys. Not recommended for anything other than testing.
+- `--nonce_seed`: An optional seed to use when creating nonces. Not recommended for anything other than testing.
+
+### Completing an end-to-end test
+
+1. Start the coordinator
+2. In a separate terminal window, start a signer. Execute the "new wallet" command. When prompted to specify a quorum, enter "2". Take note of the wallet ID that is returned.
+3. In a separate terminal window, start a second signer with the `--wallet_id` flag set to the wallet ID that was returned in the previous step.
+4. Have each signer send keys to the coordinator (`send pk` command)
+5. Have each signer get an address from the coordinator (`address`). Confirm that the addresses are the same. This address corresponds to an aggregate pubkey that combines the keys of each signer.
+6. Outside of Munstr, fund the address.
+7. Have one signer initiate a spend by using the `spend` command.
+8. Execute the `sign` command from each of the signers. After all signers have provided nonces, the coordinator will return the aggregate nonce, and the signers will be prompted to provide a partial signature. The coordinator will then aggregate the signatures and provide a raw hex transaction that is ready for broadcast!
 
 ## Demo 
 [![Munstr Demo](https://img.youtube.com/vi/9AhzEatrZbg/0.jpg)](https://www.youtube.com/watch?v=9AhzEatrZbg)
