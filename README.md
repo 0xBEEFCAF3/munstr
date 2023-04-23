@@ -9,6 +9,7 @@
 
 <div align="center"><strong>Secure your Bitcoin with the Munstrous power of decentralized multi-signature technology</strong><br>🕸🕯 An open source Musig privacy based wallet 🕯🕸
 <br />
+<br />
 </div>
 
 
@@ -32,6 +33,11 @@ This is facilitated through an interactive, multi-signature (n-of-n) Bitcoin wal
 <br />
 <br />
 </div>
+
+
+## Disclaimer
+This software is beta and should not be used for any real funds. Code and authors are subject to change. The maintainers take no responsiblity for any lost funds or damages incurred.
+
 
 ## Key Features
 
