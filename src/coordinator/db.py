@@ -1,5 +1,6 @@
 import json
 import os
+import logging
 
 class UUIDEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -100,6 +101,9 @@ class DB:
             data = json.load(f)
 
         filtered = [spend for spend in data['spends'] if spend['spend_request_id'] == spend_request_id]
+
+        if (len(filtered) == 0):
+            logging.error('[db] Unable to locate spend request %s', spend_request_id)
 
         # There should only be one
         return filtered[0]
