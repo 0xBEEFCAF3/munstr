@@ -17,7 +17,7 @@
 
 [![Bitcoin](https://img.shields.io/badge/Bitcoin-000?style=for-the-badge&logo=bitcoin&logoColor=white)](https://bitcoin.org) [![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)](https://www.python.org/) 
 
-[![GitHub tag](https://img.shields.io/github/tag/0xBEEFCAF3/munstr?include_prereleases=&sort=semver)](https://github.com/0xBEEFCAF3/munstr/releases/) [![License](https://img.shields.io/badge/License-MIT-blue)](#license)  [![issues - badge-generator](https://img.shields.io/github/issues/0xBEEFCAF3/munstr)](https://github.com/MichaelCurrin/badge-generator/issues)
+[![GitHub tag](https://img.shields.io/github/tag/0xBEEFCAF3/munstr?include_prereleases=&sort=semver)](https://github.com/0xBEEFCAF3/munstr/releases/) [![License](https://img.shields.io/badge/License-MIT-blue)](#license)  [![issues - badge-generator](https://img.shields.io/github/issues/0xBEEFCAF3/munstr)](https://github.com/0xBEEFCAF3/munstr)
 
 </div>
 
@@ -27,6 +27,8 @@
 **Munstr** is a combination of Schnorr signature based **Musig** (multisignature) keys in a terminal based wallet using decentralized **Nostr** networks as a communication layer to facilitate a secure and encrypted method of transporting and digitally signing bitcoin transactions in a way that chain analysis cannot identify the nature and setup of the transaction data. To anyone observing the blockchain, Munstr transactions look like single key **Pay-to-Taproot** (P2TR) spends.
 
 This is facilitated through an interactive, multi-signature (n-of-n) Bitcoin wallet that is designed to enable a group of signers to coordinate an interactive signing session for taproot based outputs that belong to an aggregated public key. 
+
+<br />
 
 <div align="center" style="margin: 30px;">
   <img src="https://github.com/0xBEEFCAF3/munstr/blob/main/assets/images/on_chain_tx.png?raw=true" align="center" /> 
@@ -62,7 +64,6 @@ The Nostr decentralized network acts as a transport and communications layer for
 ### Coordinator 
 Coordinators act as a mediator between digital signers and wallets.  The coordinator facilitates digital signatures from each required (n-of-n) key signers and assists in broadcasting the fully signed transaction. 
 
-### Flow
 <div align="center" style="margin: 30px;">
   <img src="https://github.com/0xBEEFCAF3/munstr/blob/main/assets/images/flow.png?raw=true" align="center" /> 
 <br />
@@ -95,10 +96,15 @@ Coordinators act as a mediator between digital signers and wallets.  The coordin
 In addition to the libraries listed in `requirements.txt`, this project also uses:
 
 - Code from the Bitcoin Optech Taproot & Schnorr workshop, specifically the Python test framework. The `test_framework` folder has been brought into our project and renamed to `src/bitcoin`.
+- [Nostr](https://github.com/nostr-protocol/nostr) by fiatjaf
 - [1313 Mockingbird Lane](https://www.dafont.com/1313-mockingbird-lane.font) font by Jeff Bensch
 - [Frankenstein Emoji](https://www.pngwing.com/en/free-png-yziyw)
 - [Markdown Badges](https://github.com/Ileriayo/markdown-badges
 ) by Ileriayo
+
+
+## Demo 
+[![Munstr Demo](https://img.youtube.com/vi/9AhzEatrZbg/0.jpg)](https://www.youtube.com/watch?v=9AhzEatrZbg)
 
 
 ## Future goals
