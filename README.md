@@ -9,6 +9,7 @@
 
 <div align="center"><strong>Secure your Bitcoin with the Munstrous power of decentralized multi-signature technology</strong><br>🕸🕯 An open source Musig privacy based wallet 🕯🕸
 <br />
+<br />
 </div>
 
 
