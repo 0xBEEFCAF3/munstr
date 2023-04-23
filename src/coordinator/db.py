@@ -81,18 +81,28 @@ class DB:
 
         return True
 
-    def add_spend_request(self, txid, output_index, prev_script_pubkey, spend_request_id, new_address):
+    def add_spend_request(self, txid, output_index, prev_script_pubkey, prev_value_sats, spend_request_id, new_address,
+            value, wallet_id):
         with open(self.json_file, "r") as f:
             data = json.load(f)
         filtered = [spend for spend in data['spends'] if spend['spend_request_id'] == spend_request_id]
         if len(filtered) > 0:
             return False
-        data['spends'].append({'spend_request_id': spend_request_id, 'txid': txid, 'output_index': output_index, 'prev_script_pubkey': prev_script_pubkey, 'new_address': new_address})
+        data['spends'].append({'spend_request_id': spend_request_id, 'txid': txid, 'output_index': output_index, 'prev_script_pubkey': prev_script_pubkey,
+                               'prev_value_sats': prev_value_sats, 'new_address': new_address, 'value': value, 'wallet_id': wallet_id})
         with open(self.json_file, "w") as f:
             json.dump(data, f)
 
         return True
-        
+
+    def get_spend_request(self, spend_request_id):
+        with open(self.json_file, "r") as f:
+            data = json.load(f)
+
+        filtered = [spend for spend in data['spends'] if spend['spend_request_id'] == spend_request_id]
+
+        # There should only be one
+        return filtered[0]
 
     def add_nonce(self, nonce, spend_request_id):
         with open(self.json_file, "r") as f:
@@ -102,4 +112,33 @@ class DB:
         with open(self.json_file, "w") as f:
             json.dump(data, f)
 
-        return True 
+        return True
+
+    def get_all_nonces(self, spend_request_id):
+        with open(self.json_file, "r") as f:
+            data = json.load(f)
+
+        # TODO check that the wallet ID exists
+        nonces = [nonce for nonce in data['nonces'] if nonce['spend_request_id'] == spend_request_id]
+
+        return nonces
+
+    def add_partial_signature(self, signature, spend_request_id):
+        with open(self.json_file, "r") as f:
+            data = json.load(f)
+
+        # TODO should guard against providing the same signature again
+        data['signatures'].append({'spend_request_id': spend_request_id, 'signature': signature})
+
+        with open(self.json_file, "w") as f:
+            json.dump(data, f)
+
+        return True
+
+    def get_all_signatures(self, spend_request_id):
+        with open(self.json_file, "r") as f:
+            data = json.load(f)
+
+        # TODO check that the wallet ID exists
+        signatures = [signature for signature in data['signatures'] if signature['spend_request_id'] == spend_request_id]
+        return signatures
