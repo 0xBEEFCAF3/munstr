@@ -179,7 +179,9 @@ def save_nonce(payload: dict, db):
     spend_request_id = get_spend_request_id(payload)
     spend_request = db.get_spend_request(spend_request_id)
     wallet_id = spend_request['wallet_id']
-    print(wallet_id)
+    if (spend_request is None):
+        logging.error('[wallet] Cannot find spend request %s in the database', spend_request_id)
+
 
     logging.info('[wallet] Saving nonce for request id %s', spend_request_id)
 
