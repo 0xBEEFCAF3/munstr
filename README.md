@@ -91,21 +91,11 @@ Coordinators act as a mediator between digital signers and wallets.  The coordin
 `python3 start_signer.py`
 
 
-## Standing on the shoulders of giants
-
-In addition to the libraries listed in `requirements.txt`, this project also uses:
-
-- Code from the Bitcoin Optech Taproot & Schnorr workshop, specifically the Python test framework. The `test_framework` folder has been brought into our project and renamed to `src/bitcoin`.
-- [Nostr](https://github.com/nostr-protocol/nostr) by fiatjaf
-- [1313 Mockingbird Lane](https://www.dafont.com/1313-mockingbird-lane.font) font by Jeff Bensch
-- [Frankenstein Emoji](https://www.pngwing.com/en/free-png-yziyw)
-- [Markdown Badges](https://github.com/Ileriayo/markdown-badges
-) by Ileriayo
-
-
 ## Demo 
 [![Munstr Demo](https://img.youtube.com/vi/9AhzEatrZbg/0.jpg)](https://www.youtube.com/watch?v=9AhzEatrZbg)
 
+## Presentation 
+[Presentation Deck](https://docs.google.com/presentation/d/1UlT6VwL7sNL3wtElnNe2ITDrrGDHLcnl6U_Gsl02dtY/edit?usp=sharing)
 
 ## Future goals
 
@@ -120,6 +110,18 @@ In addition to the libraries listed in `requirements.txt`, this project also use
 - Hardware Wallet support
   - SeedSigner (Taproot incoming)
   - Blockstream Jade
+
+
+## Standing on the shoulders of giants
+
+In addition to the libraries listed in `requirements.txt`, this project also uses:
+
+- Code from the Bitcoin Optech Taproot & Schnorr workshop, specifically the Python test framework. The `test_framework` folder has been brought into our project and renamed to `src/bitcoin`.
+- [Nostr](https://github.com/nostr-protocol/nostr) by fiatjaf
+- [1313 Mockingbird Lane](https://www.dafont.com/1313-mockingbird-lane.font) font by Jeff Bensch
+- [Frankenstein Emoji](https://www.pngwing.com/en/free-png-yziyw)
+- [Markdown Badges](https://github.com/Ileriayo/markdown-badges
+) by Ileriayo
 
 
 ## TeamMunstr
