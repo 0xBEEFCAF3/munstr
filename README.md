@@ -28,8 +28,16 @@
 
 This is facilitated through an interactive, multi-signature (n-of-n) Bitcoin wallet that is designed to enable a group of signers to coordinate an interactive signing session for taproot based outputs that belong to an aggregated public key. 
 
+<div align="center" style="margin: 30px;">
+  <img src="https://github.com/0xBEEFCAF3/munstr/blob/main/assets/images/on_chain_tx.png?raw=true" align="center" /> 
+<br />
+<br />
+</div>
+
+
 ## Disclaimer
 This software is beta and should not be used for any real funds. Code and authors are subject to change. The maintainers take no responsiblity for any lost funds or damages incurred.
+
 
 ## Key Features
 
