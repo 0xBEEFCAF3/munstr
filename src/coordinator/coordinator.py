@@ -85,8 +85,8 @@ def run():
 
         # skip if this event is old
         event_timestamp = json_payload[PayloadKeys.TIMESTAMP.value]
-        # if (event_timestamp < timestamp_filter):
-        #     continue
+        if (event_timestamp < timestamp_filter):
+            continue
 
         #
         # Handle the command that's in the event
