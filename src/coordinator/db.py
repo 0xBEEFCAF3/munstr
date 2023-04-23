@@ -100,7 +100,6 @@ class DB:
             data = json.load(f)
 
         filtered = [spend for spend in data['spends'] if spend['spend_request_id'] == spend_request_id]
-
         # There should only be one
         return filtered[0]
 

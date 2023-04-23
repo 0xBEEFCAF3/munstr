@@ -127,7 +127,7 @@ class BitcoinTestFramework(metaclass=BitcoinTestMetaClass):
                             help="Directory for caching pregenerated datadirs (default: %(default)s)")
         parser.add_argument("--tmpdir", dest="tmpdir", help="Root directory for datadirs")
         parser.add_argument("-l", "--loglevel", dest="loglevel", default="INFO",
-                            help="log events at this level and higher to the console. Can be set to DEBUG, INFO, WARNING, ERROR or CRITICAL. Passing --loglevel DEBUG will output all logs to console. Note that logs at all levels are always written to the test_framework.log file in the temporary test directory.")
+                            help="log events at this level and higher to the console. Can be set to DEBUG, INFO, WARNING, ERROR or CRITICAL. Passing --loglevel DEBUG will output all logs to console. Note that logs at all levels are always written to the src.bitcoin.log file in the temporary test directory.")
         parser.add_argument("--tracerpc", dest="trace_rpc", default=False, action="store_true",
                             help="Print out all RPC calls as they are made")
         parser.add_argument("--portseed", dest="port_seed", default=os.getpid(), type=int,
@@ -254,7 +254,7 @@ class BitcoinTestFramework(metaclass=BitcoinTestMetaClass):
             self.log.info("Test skipped")
             exit_code = TEST_EXIT_SKIPPED
         else:
-            self.log.error("Test failed. Test logging available at %s/test_framework.log", self.options.tmpdir)
+            self.log.error("Test failed. Test logging available at %s/src.bitcoin.log", self.options.tmpdir)
             self.log.error("Hint: Call {} '{}' to consolidate all logs".format(os.path.normpath(os.path.dirname(os.path.realpath(__file__)) + "/../combine_logs.py"), self.options.tmpdir))
             exit_code = TEST_EXIT_FAILED
         logging.shutdown()
@@ -474,7 +474,7 @@ class BitcoinTestFramework(metaclass=BitcoinTestMetaClass):
         self.log = logging.getLogger('TestFramework.'+ self.options.tmpdir) # Assign new logger name to prevent temp path reuse.
         self.log.setLevel(logging.DEBUG)
         # Create file handler to log all messages
-        fh = logging.FileHandler(self.options.tmpdir + '/test_framework.log', encoding='utf-8')
+        fh = logging.FileHandler(self.options.tmpdir + '/src.bitcoin.log', encoding='utf-8')
         fh.setLevel(logging.DEBUG)
         # Create console handler to log messages to stderr. By default this logs only error messages, but can be configured with --loglevel.
         ch = logging.StreamHandler(sys.stdout)

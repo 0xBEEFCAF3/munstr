@@ -101,7 +101,7 @@ def run():
 
             if command == "wallet":
                 response_payload = {
-                    'wallet_id': result[0]
+                    'wallet_id': result
                 }
             elif command == "address":
                 response_payload = {
@@ -127,9 +127,9 @@ def run():
                         'raw_tx':   result,
                         'spend_request_id': json_payload['payload']['spend_request_id']
                     }
-
-            nostr_response = generate_nostr_message(command=command, ref_id=ref_id, payload=response_payload)
-            construct_and_publish_event(nostr_response, nostr_private_key, relay_manager)
+            if result != None:
+                nostr_response = generate_nostr_message(command=command, ref_id=ref_id, payload=response_payload)
+                construct_and_publish_event(nostr_response, nostr_private_key, relay_manager)
 
         except Exception as e:
             logging.error('Something went wrong!')

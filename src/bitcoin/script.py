@@ -732,14 +732,14 @@ def TaprootSignatureHash(txTo, spent_utxos, hash_type, input_index = 0, scriptpa
     assert (input_index < len(txTo.vin))
     out_type = SIGHASH_ALL if hash_type == 0 else hash_type & 3
     in_type = hash_type & SIGHASH_ANYONECANPAY
-    spk = spent_utxos[input_index].scriptPubKey
+    spk = spent_utxos[input_index]['scriptPubKey']
     ss = bytes([0, hash_type]) # epoch, hash_type
     ss += struct.pack("<i", txTo.nVersion)
     ss += struct.pack("<I", txTo.nLockTime)
     if in_type != SIGHASH_ANYONECANPAY:
         ss += sha256(b"".join(i.prevout.serialize() for i in txTo.vin))
-        ss += sha256(b"".join(struct.pack("<q", u.nValue) for u in spent_utxos))
-        ss += sha256(b"".join(ser_string(u.scriptPubKey) for u in spent_utxos))
+        ss += sha256(b"".join(struct.pack("<q", u['nValue']) for u in spent_utxos))
+        ss += sha256(b"".join(ser_string(u['scriptPubKey']) for u in spent_utxos))
         ss += sha256(b"".join(struct.pack("<I", i.nSequence) for i in txTo.vin))
     if out_type == SIGHASH_ALL:
         ss += sha256(b"".join(o.serialize() for o in txTo.vout))
@@ -751,7 +751,7 @@ def TaprootSignatureHash(txTo, spent_utxos, hash_type, input_index = 0, scriptpa
     ss += bytes([spend_type])
     if in_type == SIGHASH_ANYONECANPAY:
         ss += txTo.vin[input_index].prevout.serialize()
-        ss += struct.pack("<q", spent_utxos[input_index].nValue)
+        ss += struct.pack("<q", spent_utxos[input_index]['nValue'])
         ss += ser_string(spk)
         ss += struct.pack("<I", txTo.vin[input_index].nSequence)
     else:

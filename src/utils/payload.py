@@ -23,7 +23,7 @@ def is_valid_payload(payload: dict):
     required_keys = [payload_key.value for payload_key in PayloadKeys]
     for key in required_keys:
         if key not in list(payload.keys()):
-            logging.error("Key is missing from JSON payload: %s", key)
+            # logging.error("Key is missing from JSON payload: %s", key)
             return False
 
     return True

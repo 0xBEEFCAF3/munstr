@@ -357,6 +357,9 @@ class CScriptWitness:
         return "CScriptWitness(%s)" % \
                (",".join([x.hex() for x in self.stack]))
 
+    def __len__(self):
+        return len(self.stack)
+
     def is_null(self):
         if self.stack:
             return False
@@ -369,7 +372,7 @@ class CTxInWitness:
     def __init__(self, witness_stack=None):
         self.scriptWitness = CScriptWitness()
         if witness_stack:
-            self.scriptWitness.stack = witness_stack
+            self.scriptWitness = witness_stack
 
     def deserialize(self, f):
         self.scriptWitness.stack = deser_string_vector(f)

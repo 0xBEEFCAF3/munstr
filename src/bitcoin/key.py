@@ -249,6 +249,8 @@ class ECPubKey():
         return self.get_bytes().hex()
 
     def __eq__(self, other):
+        if other == None:
+            return False
         assert isinstance(other, ECPubKey)
         return self.get_bytes() == other.get_bytes()
 

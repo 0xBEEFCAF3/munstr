@@ -21,7 +21,7 @@ import struct
 import sys
 import threading
 
-from test_framework.messages import (
+from src.bitcoin.messages import (
     CBlockHeader,
     MIN_VERSION_SUPPORTED,
     msg_addr,
@@ -53,7 +53,7 @@ from test_framework.messages import (
     NODE_WITNESS,
     sha256,
 )
-from test_framework.util import wait_until
+from src.bitcoin.util import wait_until
 
 logger = logging.getLogger("TestFramework.mininode")
 

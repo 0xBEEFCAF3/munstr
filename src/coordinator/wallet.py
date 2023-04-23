@@ -16,7 +16,7 @@ import bitcoin
 # can abstract this network selection bit out to a properties/config file
 bitcoin.SelectParams('testnet')
 
-COMMANDS = ['address', 'spend', 'wallet', 'xpub']
+COMMANDS = ['address', 'nonce','spend', 'wallet', 'xpub']
 
 # in memory cache of transactions that are in the process of being spent
 # keys are aggregate nonces and values are spending transactions
@@ -25,20 +25,25 @@ spending_txs = {}
 def is_valid_command(command: str):
     return command in COMMANDS
 
-def create_spending_transaction(txid, output_index, destination_addr, amount_sats, version=1, nSequence=0):
+def create_spending_transaction(txid, outputIndex, destination_addr, amount_sat, version=1, nSequence=0):
+    """Construct a CTransaction object that spends the first ouput from txid."""
+    # Construct transaction
     spending_tx = CTransaction()
+    # Populate the transaction version
     spending_tx.nVersion = version
+    # Populate the locktime
     spending_tx.nLockTime = 0
 
-    # input (only a single one is supported right now)
-    outpoint = COutPoint(int(txid, 16), output_index)
-    spending_tx.vin = [CTxIn(outpoint=outpoint, nSequence=nSequence)]
+    # Populate the transaction inputs
+    outpoint = COutPoint(int(txid, 16), outputIndex)
+    spending_tx_in = CTxIn(outpoint=outpoint, nSequence=nSequence)
+    spending_tx.vin = [spending_tx_in]
 
-    # output
-    script_pub_key = CBitcoinAddress(destination_addr).to_scriptPubKey()
-    spending_tx.vout = [CTxOut(nValue=amount_sats, scriptPubKey=script_pub_key)]
+    script_pubkey = CBitcoinAddress(destination_addr).to_scriptPubKey()
+    dest_output = CTxOut(nValue=amount_sat, scriptPubKey=script_pubkey)
+    spending_tx.vout = [dest_output]
 
-    return (spending_tx, script_pub_key)
+    return (spending_tx, script_pubkey)
 
 
 def create_wallet(payload: dict, db):
@@ -124,6 +129,8 @@ def get_address(payload: dict, db):
 def start_spend(payload: dict, db):
     # create an ID for this request
     spend_request_id = str(uuid.uuid4())
+    logging.info('[wallet] Starting spend request with id %s', spend_request_id)
+
 
     if (not 'txid' in payload):
         raise Exception("[wallet] Cannot spend without the 'txid' property, which corresponds to the transaction ID of the output that is being spent")
@@ -171,7 +178,8 @@ def save_nonce(payload: dict, db):
     nonce = payload['nonce']
     spend_request_id = get_spend_request_id(payload)
     spend_request = db.get_spend_request(spend_request_id)
-    wallet_id = get_wallet_id(payload)
+    wallet_id = spend_request['wallet_id']
+    print(wallet_id)
 
     logging.info('[wallet] Saving nonce for request id %s', spend_request_id)
 
@@ -179,6 +187,8 @@ def save_nonce(payload: dict, db):
 
     # Save the nonce to the db
     db.add_nonce(nonce, spend_request_id)
+
+    logging.info('[wallet] Successfully saved nonce for request id %s', spend_request_id)
 
     # When the last signer provides a nonce, we can return the aggregate nonce (R_AGG)
     nonces = db.get_all_nonces(spend_request_id)
@@ -192,21 +202,14 @@ def save_nonce(payload: dict, db):
     # an even y coordinate
     R_agg, negated = aggregate_schnorr_nonces(nonce_points)
 
-    (spending_tx, script_pub_key) = create_spending_transaction(spend_request['txid'],
+    (spending_tx, _script_pub_key) = create_spending_transaction(spend_request['txid'],
         spend_request['output_index'],
         spend_request['new_address'],
         spend_request['value'])
 
     # Create a sighash for ALL (0x00)
-    sighash_musig = TaprootSignatureHash(spending_tx,
-        [
-            {
-                'n': spend_request['output_index'],
-                'nValue': spend_request['prev_value_sats'],
-                'scriptPubKey': bytes.fromhex(spend_request['prev_script_pubkey'])
-            }
-        ],
-    SIGHASH_ALL_TAPROOT)
+    sighash_musig = TaprootSignatureHash(spending_tx, [{'n': spend_request['output_index'], 'nValue': spend_request['prev_value_sats'], 'scriptPubKey': bytes.fromhex(spend_request['prev_script_pubkey'])}], SIGHASH_ALL_TAPROOT)
+    print(sighash_musig)
 
     # Update cache
     spending_txs[R_agg] = spending_tx
@@ -234,7 +237,7 @@ def save_signature(payload, db):
 
     nonces = db.get_all_nonces(spend_request_id)
     quorum = wallet['quorum']
-    if (len(nonces) != quorum or len(sigs) != quorum):
+    if len(nonces) != quorum or len(sigs) != quorum:
         logging.error('[wallet] Number of nonces and signatures does not match expected quorum of %d', quorum)
         return None
 
@@ -256,7 +259,7 @@ def save_signature(payload, db):
     # Add the witness to the transaction
     spending_tx.wit.vtxinwit.append(CTxInWitness(witness_stack))
 
-    tx_serialized_hex = spending_tx.serialize().hex
+    tx_serialized_hex = spending_tx.serialize().hex()
     logging.info("[wallet] Serialized transaction hex, ready for broadcast: %s", tx_serialized_hex)
 
     # Uncomment to broadcast tx
