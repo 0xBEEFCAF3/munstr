@@ -6,7 +6,7 @@ from colorama import Fore
 
 from src.utils.nostr_utils import add_relays, construct_and_publish_event, generate_nostr_message, init_relay_manager, read_nsec, read_public_keys
 from src.utils.payload import is_valid_json, is_valid_payload, PayloadKeys
-from src.coordinator.wallet import add_xpub, create_wallet, is_valid_command, get_address, save_nonce, start_spend
+from src.coordinator.wallet import add_xpub, create_wallet, is_valid_command, get_address, save_nonce, start_spend, save_signature
 from src.coordinator.db import DB
 
 header = """
@@ -27,10 +27,11 @@ COMMAND_MAP = {
     'address':  get_address,
     'nonce':    save_nonce,
     'spend':    start_spend,
+    'sign':     save_signature,
     'wallet':   create_wallet,
     'xpub':     add_xpub
-    # TODO add 'sign'
 }
+
 def setup_logging():
     logging.basicConfig()
     logging.getLogger().setLevel(logging.INFO)
@@ -112,6 +113,20 @@ def run():
                 response_payload = {
                     'spend_request_id': result
                 }
+            elif command == "nonce":
+                if result != None: 
+                    response_payload = {
+                        'r_agg':    result[0],
+                        'sig_hash': result[1],
+                        'negated':  result[2],
+                        'spend_request_id': json_payload['payload']['spend_request_id']
+                    }
+            elif command == "sign":
+                if (result != None):
+                    response_payload = {
+                        'raw_tx':   result,
+                        'spend_request_id': json_payload['payload']['spend_request_id']
+                    }
 
             nostr_response = generate_nostr_message(command=command, ref_id=ref_id, payload=response_payload)
             construct_and_publish_event(nostr_response, nostr_private_key, relay_manager)

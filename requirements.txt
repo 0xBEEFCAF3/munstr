@@ -1,4 +1,5 @@
 bip32
 nostr
-uuid
 colorama
+python-bitcoinlib
+uuid
