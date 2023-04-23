@@ -24,7 +24,7 @@
 <br/>
 
 ## What is Munstr?
-**Munstr** (MuSig + Nostr) is a combination of Schnorr signature based **Musig** (multisignature) keys in a terminal based wallet using decentralized **Nostr** networks as a communication layer to facilitate a secure and encrypted method of transporting and digitally signing bitcoin transactions in a way that chain analysis cannot identify the nature and setup of the transaction data. To anyone observing the blockchain, Munstr transactions look like single key **Pay-to-Taproot** (P2TR) spends.
+**Munstr** (MuSig + Nostr) is a combination of Schnorr signature based **MuSig** (multisignature) keys in a terminal based wallet using decentralized **Nostr** networks as a communication layer to facilitate a secure and encrypted method of transporting and digitally signing bitcoin transactions in a way that chain analysis cannot identify the nature and setup of the transaction data. To anyone observing the blockchain, Munstr transactions look like single key **Pay-to-Taproot** (P2TR) spends.
 
 This is facilitated through an interactive, multi-signature (n-of-n) Bitcoin wallet that is designed to enable a group of signers to coordinate an interactive signing session for taproot based outputs that belong to an aggregated public key. 
 
