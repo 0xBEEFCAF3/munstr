@@ -83,14 +83,12 @@ Coordinators act as a mediator between digital signers and wallets.  The coordin
     ```
 2. Start the coordinator
     ```
-    python3 start_coordinator.py
+    ./start_coordinator.py
     ```
 
 ### Running a signer
 
-```
-python3 start_signer.py
-```
+`./start_signer.py`
 
 
 Possible arguments:

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from src.signer.signer import run_signer
 
 import sys
