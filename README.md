@@ -137,9 +137,17 @@ In addition to the libraries listed in `requirements.txt`, this project also use
 - [Nostr](https://github.com/nostr-protocol/nostr) by fiatjaf
 - [1313 Mockingbird Lane](https://www.dafont.com/1313-mockingbird-lane.font) font by Jeff Bensch
 - [Frankenstein Emoji](https://www.pngwing.com/en/free-png-yziyw)
-- [Markdown Badges](https://github.com/Ileriayo/markdown-badges
-) by Ileriayo
+- [Markdown Badges](https://github.com/Ileriayo/markdown-badges) by Ileriayo
+- [ANSI FIGlet font: Bloody](https://patorjk.com/software/taag/#p=display&f=Bloody&t=munstr)
 
+
+
+## Resources
+
+**MuSig**
+
+- \[blog\] [Taproot and MuSig2 Recap by Elle Mouton](https://ellemouton.com/posts/taproot-prelims/)
+- [video] [Tim Ruffing | MuSig 2: Simple Two-Round Schnorr Multi-Signatures](https://youtu.be/DRzDDFetS3E)
 
 ## TeamMunstr
 
