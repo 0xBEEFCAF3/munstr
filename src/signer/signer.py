@@ -1,22 +1,17 @@
-from nostr.filter import Filter, Filters
-from nostr.event import Event, EventKind
-from nostr.relay_manager import RelayManager
-from nostr.message_type import ClientMessageType
-from nostr.key import PrivateKey
-from nostr.bech32 import encode, decode
-from nostr.subscription import Subscription
-
 from colorama import Fore
 
 from src.signer.wallet import Wallet
-from src.utils.nostr_utils import generate_nostr_message, add_relays, construct_and_publish_event, init_relay_manager, read_nsec
+from src.utils.nostr_utils import generate_nostr_message, add_relays, construct_and_publish_event, init_relay_manager, read_nsec, read_public_keys
 from src.utils.payload import is_valid_json, is_valid_payload
+
+from enum import Enum
 
 import json
 import ssl
 import time
 import uuid
 import logging
+
 
 header = """
   ██████  ██▓  ▄████  ███▄    █ ▓█████  ██▀███  
@@ -32,24 +27,12 @@ header = """
 
 CORDINATOR_TIMEOUT = 5  # seconds
 
-def read_nsec():
-    with open('src/signer/nsec.txt', 'r') as f:
-        try:
-            nsec = f.read()
-            private_key = PrivateKey().from_nsec(nsec)
-            return private_key
-        except (error):
-            print("Unexpected error reading nsec.txt")
-            sys.exit(1)
-
-
-def read_cordinator_pk():
-    with open('src/signer/coordinator_pk.txt', 'r') as f:
-        try:
-            return f.read()
-        except (error):
-            print("Unexpected error reading nsec.txt")
-            sys.exit(1)
+class SignerCommands(Enum):
+    GENERATE_ADDRESS = 'address'
+    NEW_WALLET = 'new wallet'
+    SEND_PUBLIC_KEY = 'send pk'
+    SIGN = 'sign'
+    SPEND = 'spend'
 
 def read_cordinator_messages(relay_manager, private_key, time_stamp_filter=None):
     payloads = []
@@ -71,6 +54,21 @@ def read_cordinator_messages(relay_manager, private_key, time_stamp_filter=None)
         payloads.append(json_payload)
     return payloads
 
+def wait_for_coordinator(relay_manager, nostr_private_key, time_stamp, command, req_id):
+    # Wait for a bit, ideally this is a exponentially backoff waiting period where we timeout after n tries
+    time.sleep(CORDINATOR_TIMEOUT)
+    payloads = read_cordinator_messages(
+        relay_manager, nostr_private_key, time_stamp_filter=time_stamp)
+
+    filtered_payloads = [payload for payload in payloads if payload['command']
+                         == command and payload['ref_id'] == req_id]
+
+    if len(filtered_payloads) == 0:
+        logging.info('Coordinator did not respond to %s command (request ID: %s)', command, req_id)
+        return None
+
+    return filtered_payloads[0]
+
 
 def handle_create_wallet(quorum, relay_manager, private_key):
     time_stamp = int(time.time())
@@ -78,31 +76,20 @@ def handle_create_wallet(quorum, relay_manager, private_key):
     new_wallet_payload = generate_nostr_message(
         command='wallet', req_id=req_id, payload={'quorum': quorum})
     construct_and_publish_event(new_wallet_payload, private_key, relay_manager)
-    print('Nostr payload sent to cordinator, awaiting response')
-    # Wait for a bit, ideally this is a expoentially backoff waiting period where we timeout after n tries
-    time.sleep(CORDINATOR_TIMEOUT)
-    payloads = read_cordinator_messages(
-        relay_manager, private_key, time_stamp_filter=time_stamp)
 
-    filtered_payloads = [payload for payload in payloads if payload['command']
-                         == "wallet" and payload['ref_id'] == req_id]
+    logging.info('Nostr payload sent to coordinator, awaiting response')
+    coordinator_response = wait_for_coordinator(relay_manager, private_key, time_stamp, "wallet", req_id)
 
-    if len(filtered_payloads) == 0:
-        print('Cordinator did not respond to create wallet command')
-        return None
-    my_wallet_create_payload = filtered_payloads[0]
-    if my_wallet_create_payload == None:
-        print('Cordinator did not respond to create wallet command')
+    if coordinator_response == None:
+        print('Coordinator did not respond to %s command', SignerCommands.NEW_WALLET.value)
         return None
 
-    print(
-        f"Wallet created with the following id {my_wallet_create_payload['payload']['wallet_id']}")
+    new_wallet_id = coordinator_response['payload']['wallet_id']
+    logging.info("Wallet created with ID: %s", new_wallet_id)
 
-    return my_wallet_create_payload['payload']['wallet_id']
+    return new_wallet_id
 
 # NOTE creating an xpub does not expect a response
-
-
 def handle_create_xpub(wallet, relay_manager, private_key):
     xpub = wallet.get_root_xpub()
     add_xpub_payload = generate_nostr_message(
@@ -119,24 +106,15 @@ def handle_get_address(wallet, index, relay_manager, private_key):
     construct_and_publish_event(
         get_address_paylaod, private_key, relay_manager)
 
-    print('Nostr payload sent to cordinator, awaiting response')
-    # Wait for a bit, ideally this is a expoentially backoff waiting period where we timeout after n tries
-    time.sleep(CORDINATOR_TIMEOUT)
-    payloads = read_cordinator_messages(
-        relay_manager, private_key, time_stamp_filter=time_stamp)
+    logging.info('Nostr payload sent to coordinator, awaiting response')
+    coordinator_response = wait_for_coordinator(relay_manager, private_key, time_stamp, "address", req_id)
 
-    filtered_payloads = [payload for payload in payloads if payload['command']
-                         == "address" and payload['ref_id'] == req_id]
-    if len(filtered_payloads) == 0:
-        print('Cordinator did not respond to get address command')
-        return None
-    # Server shouldnt respond with > 1 notes
-    address_response = filtered_payloads[0]
-    if address_response == None:
-        print('Cordinator did not respond to get address command')
+    if coordinator_response == None:
+        print('Coordinator did not respond to %s command', SignerCommands.GENERATE_ADDRESS.value)
         return None
 
-    return address_response['payload']
+    new_address = coordinator_response['payload']
+    return new_address
 
 
 def handle_spend(outpoint, new_address, value, wallet, relay_manager, private_key):
@@ -147,23 +125,15 @@ def handle_spend(outpoint, new_address, value, wallet, relay_manager, private_ke
     construct_and_publish_event(
         start_spend_payload, private_key, relay_manager)
 
-    print('Nostr payload sent to cordinator, awaiting response')
-    # Wait for a bit, ideally this is a expoentially backoff waiting period where we timeout after n tries
-    time.sleep(CORDINATOR_TIMEOUT)
-    payloads = read_cordinator_messages(
-        relay_manager, private_key, time_stamp_filter=time_stamp)
+    logging.info('Nostr payload sent to coordinator, awaiting response')
+    coordinator_response = wait_for_coordinator(relay_manager, private_key, time_stamp, "spend", req_id)
 
-    filtered_payloads = [payload for payload in payloads if payload['command']
-                         == "spend" and payload['ref_id'] == req_id]
-    if len(filtered_payloads) == 0:
-        print('Cordinator did not respond to spend command')
+    if coordinator_response == None:
+        print('Coordinator did not respond to %s command', SignerCommands.SPEND.value)
         return None
-    # Server shouldnt respond with > 1 notes
-    spend_response = filtered_payloads[0]
-    if spend_response == None:
-        print('Cordinator did not respond to spend command')
-        return None
-    return spend_response['payload']['spend_request_id']
+
+    spend_request_id = coordinator_response['payload']['spend_request_id']
+    return spend_request_id
 
 
 def handle_sign_tx(spend_request_id, wallet, relay_manager, private_key):
@@ -257,50 +227,62 @@ def run_signer(wallet_id=None, key_pair_seed=None, nonce_seed=None):
     setup_logging()
 
     relay_manager = add_relays()
-    private_key = read_nsec()
-    cordinator_pk = read_cordinator_pk()
+    nostr_private_key, nostr_public_key = read_nsec('src/signer/nsec.txt')
+
+    # get the public keys for the coordinator so we can subscribe to messages from them
+    cordinator_pk = read_public_keys('src/signer/coordinator_pk.txt')[0]
+
     init_relay_manager(relay_manager, [cordinator_pk])
     logging.info('Relay manager started')
+
+    # Load the wallet if an ID was provided
     wallet = None
     if wallet_id != None:
       wallet = Wallet(wallet_id=wallet_id, key_pair_seed=key_pair_seed, nonce_seed=nonce_seed)
-        
+
     while True:
         user_input = input("Enter a command: ")
-        if user_input.lower() == "new wallet":
+ 
+        if user_input.lower() == SignerCommands.NEW_WALLET.value:
             quorum = int(input("Enter a quorum: "))
             logging.info(f"Creating a new wallet with {quorum} signers ...")
             wallet_id = handle_create_wallet(
-                quorum, relay_manager, private_key)
+                quorum, relay_manager, nostr_private_key)
+            # TODO: nonce_seed is currently required
             wallet = Wallet(wallet_id, key_pair_seed=key_pair_seed, nonce_seed=nonce_seed)
-        elif user_input.lower() == "send pk":
+
+        elif user_input.lower() == SignerCommands.SEND_PUBLIC_KEY.value:
             logging.info("Generating and posting the public key...")
-            handle_create_xpub(wallet, relay_manager, private_key)
-        elif user_input.lower() == "address":
+            handle_create_xpub(wallet, relay_manager, nostr_private_key)
+
+        elif user_input.lower() == SignerCommands.GENERATE_ADDRESS.value:
             # TODO bug: you cannot sign or spend with out getting an address first
             logging.info("Generating a new address...")
             address_payload = handle_get_address(
-                wallet, 0, relay_manager, private_key)
+                wallet, 0, relay_manager, nostr_private_key)
 
             wallet.set_cmap(address_payload['cmap'])
             wallet.set_pubkey_agg(address_payload['pubkey_agg'])
             logging.info(f"Got address {address_payload['address']}")
 
-        elif user_input.lower() == "spend":
+        elif user_input.lower() == SignerCommands.SPEND.value:
             logging.info("Preparing to spend funds...")
             txid = input("Enter previous tx id: ")
             index = int(input("Enter output index: "))
-            new_address = input("Where would you like to send sats to: ")
-            sats = int(input("How much are we spending: "))
+            new_address = input("Destination address (where would you like to send funds to?): ")
+            sats = int(input("Amount in satoshis (how much are we spending?): "))
 
             spend_request_id = handle_spend(
-                [txid, index], new_address, sats, wallet, relay_manager, private_key)
+                [txid, index], new_address, sats, wallet, relay_manager, nostr_private_key)
             wallet.set_current_spend_request_id(spend_request_id)
             logging.info(
                 f'Your spend request id {spend_request_id}, next provide nonces and signatures!!')
-        elif user_input.lower() == "sign":
+
+        elif user_input.lower() == SignerCommands.SIGN.value:
             spend_request_id = input("Provide a spend request id: ")
             spend_request_id = handle_sign_tx(
-                spend_request_id, wallet, relay_manager, private_key)
+                spend_request_id, wallet, relay_manager, nostr_private_key)
+
         else:
-            logging.info("Invalid command. Please enter one of the following: 'new wallet', 'send pk', ' address', 'spend', 'sign'")
+            possible_commands = [c.value for c in SignerCommands]
+            logging.info("Invalid command. Please enter one of the following: %s", possible_commands)
