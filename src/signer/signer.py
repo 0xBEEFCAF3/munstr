@@ -286,3 +286,4 @@ def run_signer(wallet_id=None, key_pair_seed=None, nonce_seed=None):
         else:
             possible_commands = [c.value for c in SignerCommands]
             logging.info("Invalid command. Please enter one of the following: %s", possible_commands)
+            
