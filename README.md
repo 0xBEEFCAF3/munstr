@@ -38,7 +38,7 @@ This is facilitated through an interactive, multi-signature (n-of-n) Bitcoin wal
 
 
 ## Disclaimer
-This software is beta and should not be used for any real funds. Code and authors are subject to change. The maintainers take no responsiblity for any lost funds or damages incurred.
+This software is beta and should not be used for any real funds. Code and authors are subject to change. The maintainers take no responsibility for any lost funds or damages incurred.
 
 
 ## Key Features
