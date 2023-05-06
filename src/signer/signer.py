@@ -117,11 +117,11 @@ def handle_get_address(wallet, index, relay_manager, private_key):
     return new_address
 
 
-def handle_spend(outpoint, new_address, value, wallet, relay_manager, private_key):
+def handle_spend(outpoint, new_address, value, wallet, relay_manager, private_key, address_index):
     time_stamp = int(time.time())
     req_id = str(uuid.uuid4())
     start_spend_payload = generate_nostr_message(command='spend', req_id=req_id, payload={'wallet_id': wallet.get_wallet_id(
-    ), 'txid': outpoint[0], 'output_index': outpoint[1], 'new_address': new_address, 'value': value})
+    ), 'txid': outpoint[0], 'output_index': outpoint[1], 'new_address': new_address, 'value': value, 'address_index': address_index})
     construct_and_publish_event(
         start_spend_payload, private_key, relay_manager)
 
@@ -158,7 +158,6 @@ def handle_sign_tx(spend_request_id, wallet, relay_manager, private_key):
 
         payloads = read_cordinator_messages(
             relay_manager, private_key, time_stamp_filter=time_stamp)
-        print(payloads)
         filtered_payloads = [payload for payload in payloads if payload['command']
                             == "nonce" and 'spend_request_id' in payload['payload'] and payload['payload']['spend_request_id'] == spend_request_id]
         logging.info(filtered_payloads)
@@ -175,12 +174,14 @@ def handle_sign_tx(spend_request_id, wallet, relay_manager, private_key):
     r_agg = nonce_response['payload']['r_agg']
     sig_hash = nonce_response['payload']['sig_hash']
     should_negate_nonce = nonce_response['payload']['negated']
+    address_index = int(nonce_response['payload']['address_index'])
+    print(address_index)
 
     wallet.set_r_agg(r_agg)
     wallet.set_sig_hash(sig_hash)
     wallet.set_should_negate_nonce(should_negate_nonce)
 
-    partial_signature = wallet.sign_with_current_context(nonce)
+    partial_signature = wallet.sign_with_current_context(nonce, address_index)
     logging.info(f"Providing partial signatuire: {partial_signature}")
 
     #Provide cordinator with partial sig
@@ -271,9 +272,10 @@ def run_signer(wallet_id=None, key_pair_seed=None, nonce_seed=None):
             index = int(input("Enter output index: "))
             new_address = input("Destination address (where would you like to send funds to?): ")
             sats = int(input("Amount in satoshis (how much are we spending?): "))
+            address_index = int(input("Which address index are you spending from: "))
 
             spend_request_id = handle_spend(
-                [txid, index], new_address, sats, wallet, relay_manager, nostr_private_key)
+                [txid, index], new_address, sats, wallet, relay_manager, nostr_private_key, address_index)
             wallet.set_current_spend_request_id(spend_request_id)
             logging.info(
                 f'Your spend request id {spend_request_id}, next provide nonces and signatures!!')

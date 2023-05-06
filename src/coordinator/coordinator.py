@@ -119,7 +119,8 @@ def run():
                         'r_agg':    result[0],
                         'sig_hash': result[1],
                         'negated':  result[2],
-                        'spend_request_id': json_payload['payload']['spend_request_id']
+                        'spend_request_id': json_payload['payload']['spend_request_id'],
+                        'address_index': result[3],
                     }
             elif command == "sign":
                 if (result != None):
