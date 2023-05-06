@@ -45,7 +45,6 @@ def create_spending_transaction(txid, outputIndex, destination_addr, amount_sat,
 
     return (spending_tx, script_pubkey)
 
-
 def create_wallet(payload: dict, db):
     if (not 'quorum' in payload):
         raise Exception("[wallet] Cannot create a wallet without the 'quorum' property")
@@ -91,7 +90,6 @@ def get_address(payload: dict, db):
     wallet_id = get_wallet_id(payload)
     ec_public_keys = []
 
-    # wallet = db.get_wallet(wallet_id)
     wallet_xpubs = db.get_xpubs(wallet_id)
 
     if (wallet_xpubs == []):
@@ -102,15 +100,16 @@ def get_address(payload: dict, db):
         ec_public_key = ECPubKey()
 
         # TODO xpubs aren't working quite right. Using regular public keys for now.
-        # bip32_node = BIP32.from_xpub(xpub['xpub'])
-        # public_key = bip32_node.get_pubkey_from_path(f"m/{index}")
-        #e c_public_key.set(public_key)
+        bip32_node = BIP32.from_xpub(xpub['xpub'])
+        public_key = bip32_node.get_pubkey_from_path(f"m/{index}")
+        print("PUBKEY", public_key)
+        ec_public_key.set(public_key)
 
-        ec_public_key.set(bytes.fromhex(xpub['xpub']))
+        # ec_public_key.set(bytes.fromhex(xpub['xpub']))
         ec_public_keys.append(ec_public_key)
 
     c_map, pubkey_agg = generate_musig_key(ec_public_keys)
-    logging.info('[wallet] Aggregate public key: %s', pubkey_agg.get_bytes().hex())
+    logging.info('[wallet] Aggregate public key: %s at index: %i', pubkey_agg.get_bytes().hex(), index)
 
     # Create a segwit v1 address (P2TR) from the aggregate key
     p2tr_address = program_to_witness(0x01, pubkey_agg.get_bytes())
@@ -130,8 +129,6 @@ def start_spend(payload: dict, db):
     # create an ID for this request
     spend_request_id = str(uuid.uuid4())
     logging.info('[wallet] Starting spend request with id %s', spend_request_id)
-
-
     if (not 'txid' in payload):
         raise Exception("[wallet] Cannot spend without the 'txid' property, which corresponds to the transaction ID of the output that is being spent")
 
@@ -269,5 +266,3 @@ def save_signature(payload, db):
     # print("TXID", txid)
 
     return tx_serialized_hex
-
-

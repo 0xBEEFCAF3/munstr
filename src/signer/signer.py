@@ -93,7 +93,7 @@ def handle_create_wallet(quorum, relay_manager, private_key):
 def handle_create_xpub(wallet, relay_manager, private_key):
     xpub = wallet.get_root_xpub()
     add_xpub_payload = generate_nostr_message(
-        command='xpub', payload={'wallet_id': wallet.get_wallet_id(), 'xpub': wallet.get_pubkey()})
+        command='xpub', payload={'wallet_id': wallet.get_wallet_id(), 'xpub': xpub})
     construct_and_publish_event(add_xpub_payload, private_key, relay_manager)
     print("Operation Finished")
 
@@ -253,13 +253,13 @@ def run_signer(wallet_id=None, key_pair_seed=None, nonce_seed=None):
 
         elif user_input.lower() == SignerCommands.SEND_PUBLIC_KEY.value:
             logging.info("Generating and posting the public key...")
-            handle_create_xpub(wallet, relay_manager, nostr_private_key)
-
+            handle_create_xpub(wallet, relay_manager, private_key)
         elif user_input.lower() == SignerCommands.GENERATE_ADDRESS.value:
-            # TODO bug: you cannot sign or spend with out getting an address first
-            logging.info("Generating a new address...")
+            # TODO right now you have to manage your own address indecies
+            index = int(input("Enter address index: "))
+            logging.info(f"Generating a new address at index {index} ...")
             address_payload = handle_get_address(
-                wallet, 0, relay_manager, nostr_private_key)
+                wallet, index, relay_manager, private_key)
 
             wallet.set_cmap(address_payload['cmap'])
             wallet.set_pubkey_agg(address_payload['pubkey_agg'])
