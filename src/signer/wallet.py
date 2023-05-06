@@ -1,17 +1,9 @@
-from bip32 import BIP32, HARDENED_INDEX
+from bip32 import BIP32
 
-from src.bitcoin.key import ECKey, ECPubKey, generate_key_pair, generate_bip340_key_pair, generate_schnorr_nonce
-from src.bitcoin.messages import sha256, CTxInWitness, CScriptWitness
-from src.bitcoin.musig import aggregate_musig_signatures, aggregate_schnorr_nonces, generate_musig_key, sign_musig
-from src.bitcoin.script import tagged_hash
-from src.bitcoin.script import CScript, CScriptOp, hash160, OP_0, OP_2, OP_CHECKMULTISIG, SegwitV0SignatureHash, SIGHASH_ALL, SIGHASH_ALL_TAPROOT, TaprootSignatureHash, get_p2pkh_script 
-from src.bitcoin.address import program_to_witness
-from src.bitcoin.messages import (
-    COutPoint,
-    CTransaction,
-    CTxIn,
-    CTxOut,
-)
+from src.bitcoin.key import ECKey, ECPubKey, generate_key_pair
+from src.bitcoin.messages import sha256
+from src.bitcoin.musig import sign_musig
+
 
 class Wallet:
     def __init__(self, wallet_id, key_pair_seed, nonce_seed):
@@ -117,4 +109,3 @@ class Wallet:
             k1.negate()
         tweaked_private_key = self.get_private_key_tweaked()
         return sign_musig(tweaked_private_key, k1, self.r_agg, self.pubkey_agg, self.sig_hash)
-    
