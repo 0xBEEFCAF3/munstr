@@ -81,11 +81,8 @@ class Wallet:
             return None
         pk = self.get_pubkey_at_index(address_index).hex()
         prv = self.get_root_hd_node().get_privkey_from_path(f"m/{address_index}")
-        print("prv", prv)
         private_key = ECKey().set(prv)
 
-        # pk = self.public_key.get_bytes().hex()
-        # private_key = self.private_key
         tweaked_key = private_key * self.cmap[pk]
         # TODO bug here where the server calcualtes a different y value and the signer
         if self.pubkey_agg.get_y() % 2 != 0:

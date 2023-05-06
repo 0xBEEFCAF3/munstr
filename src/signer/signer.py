@@ -175,8 +175,6 @@ def handle_sign_tx(spend_request_id, wallet, relay_manager, private_key):
     sig_hash = nonce_response['payload']['sig_hash']
     should_negate_nonce = nonce_response['payload']['negated']
     address_index = int(nonce_response['payload']['address_index'])
-    print(address_index)
-
     wallet.set_r_agg(r_agg)
     wallet.set_sig_hash(sig_hash)
     wallet.set_should_negate_nonce(should_negate_nonce)
