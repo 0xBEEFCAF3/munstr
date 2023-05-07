@@ -27,7 +27,6 @@ import socket
 import struct
 import time
 
-from src.bitcoin.siphash import siphash256
 from src.bitcoin.util import hex_str_to_bytes, assert_equal
 
 MIN_VERSION_SUPPORTED = 60001
@@ -753,77 +752,6 @@ class P2PHeaderAndShortWitnessIDs(P2PHeaderAndShortIDs):
     __slots__ = ()
     def serialize(self):
         return super(P2PHeaderAndShortWitnessIDs, self).serialize(with_witness=True)
-
-# Calculate the BIP 152-compact blocks shortid for a given transaction hash
-def calculate_shortid(k0, k1, tx_hash):
-    expected_shortid = siphash256(k0, k1, tx_hash)
-    expected_shortid &= 0x0000ffffffffffff
-    return expected_shortid
-
-
-# This version gets rid of the array lengths, and reinterprets the differential
-# encoding into indices that can be used for lookup.
-class HeaderAndShortIDs:
-    __slots__ = ("header", "nonce", "prefilled_txn", "shortids", "use_witness")
-
-    def __init__(self, p2pheaders_and_shortids = None):
-        self.header = CBlockHeader()
-        self.nonce = 0
-        self.shortids = []
-        self.prefilled_txn = []
-        self.use_witness = False
-
-        if p2pheaders_and_shortids is not None:
-            self.header = p2pheaders_and_shortids.header
-            self.nonce = p2pheaders_and_shortids.nonce
-            self.shortids = p2pheaders_and_shortids.shortids
-            last_index = -1
-            for x in p2pheaders_and_shortids.prefilled_txn:
-                self.prefilled_txn.append(PrefilledTransaction(x.index + last_index + 1, x.tx))
-                last_index = self.prefilled_txn[-1].index
-
-    def to_p2p(self):
-        if self.use_witness:
-            ret = P2PHeaderAndShortWitnessIDs()
-        else:
-            ret = P2PHeaderAndShortIDs()
-        ret.header = self.header
-        ret.nonce = self.nonce
-        ret.shortids_length = len(self.shortids)
-        ret.shortids = self.shortids
-        ret.prefilled_txn_length = len(self.prefilled_txn)
-        ret.prefilled_txn = []
-        last_index = -1
-        for x in self.prefilled_txn:
-            ret.prefilled_txn.append(PrefilledTransaction(x.index - last_index - 1, x.tx))
-            last_index = x.index
-        return ret
-
-    def get_siphash_keys(self):
-        header_nonce = self.header.serialize()
-        header_nonce += struct.pack("<Q", self.nonce)
-        hash_header_nonce_as_str = sha256(header_nonce)
-        key0 = struct.unpack("<Q", hash_header_nonce_as_str[0:8])[0]
-        key1 = struct.unpack("<Q", hash_header_nonce_as_str[8:16])[0]
-        return [ key0, key1 ]
-
-    # Version 2 compact blocks use wtxid in shortids (rather than txid)
-    def initialize_from_block(self, block, nonce=0, prefill_list = [0], use_witness = False):
-        self.header = CBlockHeader(block)
-        self.nonce = nonce
-        self.prefilled_txn = [ PrefilledTransaction(i, block.vtx[i]) for i in prefill_list ]
-        self.shortids = []
-        self.use_witness = use_witness
-        [k0, k1] = self.get_siphash_keys()
-        for i in range(len(block.vtx)):
-            if i not in prefill_list:
-                tx_hash = block.vtx[i].sha256
-                if use_witness:
-                    tx_hash = block.vtx[i].calc_sha256(with_witness=True)
-                self.shortids.append(calculate_shortid(k0, k1, tx_hash))
-
-    def __repr__(self):
-        return "HeaderAndShortIDs(header=%s, nonce=%d, shortids=%s, prefilledtxn=%s" % (repr(self.header), self.nonce, repr(self.shortids), repr(self.prefilled_txn))
 
 
 class BlockTransactionsRequest:
