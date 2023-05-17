@@ -76,36 +76,30 @@ class Wallet:
     def set_current_spend_request_id(self, current_spend_request_id):
         self.current_spend_request_id = current_spend_request_id 
 
-    def get_private_key_tweaked(self):
-        if self.cmap != None:
-            # TODO this is all bip32 stuff
-            # TODO index is hardcoded at 1
-            # index = 1
-            # pk = self.get_pubkey_at_index(index).hex()
-            # TODO hardcoded pk, get from class variable
-            # prv = self.get_root_hd_node().get_privkey_from_path(f"m/{index}")
-            # print("prv", prv)
-            # private_key = ECKey().set(prv)
+    def get_private_key_tweaked(self, address_index: int):
+        if self.cmap == None:
+            return None
+        pk = self.get_pubkey_at_index(address_index).hex()
+        prv = self.get_root_hd_node().get_privkey_from_path(f"m/{address_index}")
+        private_key = ECKey().set(prv)
 
-            pk = self.public_key.get_bytes().hex()
-            private_key = self.private_key
-            tweaked_key = private_key * self.cmap[pk]
+        tweaked_key = private_key * self.cmap[pk]
+        # TODO bug here where the server calcualtes a different y value and the signer
+        if self.pubkey_agg.get_y() % 2 != 0:
+            tweaked_key.negate()
+            self.pubkey_agg.negate()
 
-            if self.pubkey_agg.get_y() % 2 != 0:
-                tweaked_key.negate()
-                self.pubkey_agg.negate()
+        return tweaked_key
 
-            return tweaked_key
-        return None
-
-    def sign_with_current_context(self, nonce: str):
+    def sign_with_current_context(self, nonce: str, address_index: int):
         if self.sig_hash == None or self.cmap == None or self.r_agg == None or self.pubkey_agg == None:
             # TODO should throw
             return None
 
-        k1 = ECKey().set(self.nonce_seed)
+        k = ECKey().set(self.nonce_seed)
         # negate here
         if self.should_negate_nonce:
-            k1.negate()
-        tweaked_private_key = self.get_private_key_tweaked()
-        return sign_musig(tweaked_private_key, k1, self.r_agg, self.pubkey_agg, self.sig_hash)
+            k.negate()
+        tweaked_private_key = self.get_private_key_tweaked(address_index)
+        return sign_musig(tweaked_private_key, k, self.r_agg, self.pubkey_agg, self.sig_hash)
+    

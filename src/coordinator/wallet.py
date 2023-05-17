@@ -45,7 +45,6 @@ def create_spending_transaction(txid, outputIndex, destination_addr, amount_sat,
 
     return (spending_tx, script_pubkey)
 
-
 def create_wallet(payload: dict, db):
     if (not 'quorum' in payload):
         raise Exception("[wallet] Cannot create a wallet without the 'quorum' property")
@@ -91,7 +90,6 @@ def get_address(payload: dict, db):
     wallet_id = get_wallet_id(payload)
     ec_public_keys = []
 
-    # wallet = db.get_wallet(wallet_id)
     wallet_xpubs = db.get_xpubs(wallet_id)
 
     if (wallet_xpubs == []):
@@ -100,17 +98,14 @@ def get_address(payload: dict, db):
     for xpub in wallet_xpubs:
         # The method to generate and aggregate MuSig key expects ECPubKey objects
         ec_public_key = ECPubKey()
+        bip32_node = BIP32.from_xpub(xpub['xpub'])
+        public_key = bip32_node.get_pubkey_from_path(f"m/{index}")
+        ec_public_key.set(public_key)
 
-        # TODO xpubs aren't working quite right. Using regular public keys for now.
-        # bip32_node = BIP32.from_xpub(xpub['xpub'])
-        # public_key = bip32_node.get_pubkey_from_path(f"m/{index}")
-        #e c_public_key.set(public_key)
-
-        ec_public_key.set(bytes.fromhex(xpub['xpub']))
         ec_public_keys.append(ec_public_key)
 
     c_map, pubkey_agg = generate_musig_key(ec_public_keys)
-    logging.info('[wallet] Aggregate public key: %s', pubkey_agg.get_bytes().hex())
+    logging.info('[wallet] Aggregate public key: %s at index: %i', pubkey_agg.get_bytes().hex(), index)
 
     # Create a segwit v1 address (P2TR) from the aggregate key
     p2tr_address = program_to_witness(0x01, pubkey_agg.get_bytes())
@@ -130,8 +125,6 @@ def start_spend(payload: dict, db):
     # create an ID for this request
     spend_request_id = str(uuid.uuid4())
     logging.info('[wallet] Starting spend request with id %s', spend_request_id)
-
-
     if (not 'txid' in payload):
         raise Exception("[wallet] Cannot spend without the 'txid' property, which corresponds to the transaction ID of the output that is being spent")
 
@@ -144,9 +137,14 @@ def start_spend(payload: dict, db):
     if (not 'value' in payload):
         raise Exception("[wallet] Cannot spend without the 'value' property, which corresponds to the value (in satoshis) of the output that is being spent")
 
+    if (not 'address_index' in payload):
+        raise Exception("[wallet] Cannot spend without the 'address_index' property, which corresponds to which utxo from which address is being spent")
+
+
     txid = payload['txid']
     output_index = payload['output_index']
     destination_address = payload['new_address']
+    address_index = payload['address_index']
     wallet_id = get_wallet_id(payload)
 
     # 10% of fees will go to miners. Can have better fee support in the future
@@ -166,7 +164,8 @@ def start_spend(payload: dict, db):
                              spend_request_id,
                              destination_address,
                              output_amount,
-                             wallet_id)):
+                             wallet_id,
+                             address_index)):
         logging.info('[wallet] Saved spend request %s to the database', spend_request_id)
 
     return spend_request_id
@@ -194,8 +193,7 @@ def save_nonce(payload: dict, db):
 
     # When the last signer provides a nonce, we can return the aggregate nonce (R_AGG)
     nonces = db.get_all_nonces(spend_request_id)
-
-    if (len(nonces) != wallet['quorum']):
+    if (len(nonces) < wallet['quorum']):
         return None
 
     # Generate nonce points
@@ -211,13 +209,12 @@ def save_nonce(payload: dict, db):
 
     # Create a sighash for ALL (0x00)
     sighash_musig = TaprootSignatureHash(spending_tx, [{'n': spend_request['output_index'], 'nValue': spend_request['prev_value_sats'], 'scriptPubKey': bytes.fromhex(spend_request['prev_script_pubkey'])}], SIGHASH_ALL_TAPROOT)
-    print(sighash_musig)
 
     # Update cache
     spending_txs[R_agg] = spending_tx
 
     # Encode everything as hex before returning
-    return (R_agg.get_bytes().hex(), sighash_musig.hex(), negated)
+    return (R_agg.get_bytes().hex(), sighash_musig.hex(), negated, spend_request['address_index'])
 
 def save_signature(payload, db):
     if (not 'signature' in payload):
@@ -269,5 +266,3 @@ def save_signature(payload, db):
     # print("TXID", txid)
 
     return tx_serialized_hex
-
-

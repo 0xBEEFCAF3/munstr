@@ -83,14 +83,14 @@ class DB:
         return True
 
     def add_spend_request(self, txid, output_index, prev_script_pubkey, prev_value_sats, spend_request_id, new_address,
-            value, wallet_id):
+            value, wallet_id, address_index):
         with open(self.json_file, "r") as f:
             data = json.load(f)
         filtered = [spend for spend in data['spends'] if spend['spend_request_id'] == spend_request_id]
         if len(filtered) > 0:
             return False
         data['spends'].append({'spend_request_id': spend_request_id, 'txid': txid, 'output_index': output_index, 'prev_script_pubkey': prev_script_pubkey,
-                               'prev_value_sats': prev_value_sats, 'new_address': new_address, 'value': value, 'wallet_id': wallet_id})
+                               'prev_value_sats': prev_value_sats, 'new_address': new_address, 'value': value, 'wallet_id': wallet_id, 'address_index': address_index})
         with open(self.json_file, "w") as f:
             json.dump(data, f)
 

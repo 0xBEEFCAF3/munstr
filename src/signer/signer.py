@@ -93,7 +93,7 @@ def handle_create_wallet(quorum, relay_manager, private_key):
 def handle_create_xpub(wallet, relay_manager, private_key):
     xpub = wallet.get_root_xpub()
     add_xpub_payload = generate_nostr_message(
-        command='xpub', payload={'wallet_id': wallet.get_wallet_id(), 'xpub': wallet.get_pubkey()})
+        command='xpub', payload={'wallet_id': wallet.get_wallet_id(), 'xpub': xpub})
     construct_and_publish_event(add_xpub_payload, private_key, relay_manager)
     print("Operation Finished")
 
@@ -117,11 +117,11 @@ def handle_get_address(wallet, index, relay_manager, private_key):
     return new_address
 
 
-def handle_spend(outpoint, new_address, value, wallet, relay_manager, private_key):
+def handle_spend(outpoint, new_address, value, wallet, relay_manager, private_key, address_index):
     time_stamp = int(time.time())
     req_id = str(uuid.uuid4())
     start_spend_payload = generate_nostr_message(command='spend', req_id=req_id, payload={'wallet_id': wallet.get_wallet_id(
-    ), 'txid': outpoint[0], 'output_index': outpoint[1], 'new_address': new_address, 'value': value})
+    ), 'txid': outpoint[0], 'output_index': outpoint[1], 'new_address': new_address, 'value': value, 'address_index': address_index})
     construct_and_publish_event(
         start_spend_payload, private_key, relay_manager)
 
@@ -158,7 +158,6 @@ def handle_sign_tx(spend_request_id, wallet, relay_manager, private_key):
 
         payloads = read_cordinator_messages(
             relay_manager, private_key, time_stamp_filter=time_stamp)
-        print(payloads)
         filtered_payloads = [payload for payload in payloads if payload['command']
                             == "nonce" and 'spend_request_id' in payload['payload'] and payload['payload']['spend_request_id'] == spend_request_id]
         logging.info(filtered_payloads)
@@ -175,12 +174,12 @@ def handle_sign_tx(spend_request_id, wallet, relay_manager, private_key):
     r_agg = nonce_response['payload']['r_agg']
     sig_hash = nonce_response['payload']['sig_hash']
     should_negate_nonce = nonce_response['payload']['negated']
-
+    address_index = int(nonce_response['payload']['address_index'])
     wallet.set_r_agg(r_agg)
     wallet.set_sig_hash(sig_hash)
     wallet.set_should_negate_nonce(should_negate_nonce)
 
-    partial_signature = wallet.sign_with_current_context(nonce)
+    partial_signature = wallet.sign_with_current_context(nonce, address_index)
     logging.info(f"Providing partial signatuire: {partial_signature}")
 
     #Provide cordinator with partial sig
@@ -253,13 +252,13 @@ def run_signer(wallet_id=None, key_pair_seed=None, nonce_seed=None):
 
         elif user_input.lower() == SignerCommands.SEND_PUBLIC_KEY.value:
             logging.info("Generating and posting the public key...")
-            handle_create_xpub(wallet, relay_manager, nostr_private_key)
-
+            handle_create_xpub(wallet, relay_manager, private_key)
         elif user_input.lower() == SignerCommands.GENERATE_ADDRESS.value:
-            # TODO bug: you cannot sign or spend with out getting an address first
-            logging.info("Generating a new address...")
+            # TODO right now you have to manage your own address indecies
+            index = int(input("Enter address index: "))
+            logging.info(f"Generating a new address at index {index} ...")
             address_payload = handle_get_address(
-                wallet, 0, relay_manager, nostr_private_key)
+                wallet, index, relay_manager, private_key)
 
             wallet.set_cmap(address_payload['cmap'])
             wallet.set_pubkey_agg(address_payload['pubkey_agg'])
@@ -271,9 +270,10 @@ def run_signer(wallet_id=None, key_pair_seed=None, nonce_seed=None):
             index = int(input("Enter output index: "))
             new_address = input("Destination address (where would you like to send funds to?): ")
             sats = int(input("Amount in satoshis (how much are we spending?): "))
+            address_index = int(input("Which address index are you spending from: "))
 
             spend_request_id = handle_spend(
-                [txid, index], new_address, sats, wallet, relay_manager, nostr_private_key)
+                [txid, index], new_address, sats, wallet, relay_manager, nostr_private_key, address_index)
             wallet.set_current_spend_request_id(spend_request_id)
             logging.info(
                 f'Your spend request id {spend_request_id}, next provide nonces and signatures!!')
