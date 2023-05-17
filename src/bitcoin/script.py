@@ -16,8 +16,6 @@ import itertools
 import queue
 import struct
 
-from .bignum import bn2vch
-
 MAX_SCRIPT_ELEMENT_SIZE = 520
 LOCKTIME_THRESHOLD = 500000000
 ANNEX_TAG = 0x50
@@ -32,6 +30,16 @@ TAPROOT_VER = 0
 def hash160(s):
     return hashlib.new('ripemd160', sha256(s)).digest()
 
+def bn2vch(v):
+    """Convert number to bitcoin-specific little endian format."""
+    # We need v.bit_length() bits, plus a sign bit for every nonzero number.
+    n_bits = v.bit_length() + (v != 0)
+    # The number of bytes for that is:
+    n_bytes = (n_bits + 7) // 8
+    # Convert number to absolute value + sign in top bit.
+    encoded_v = 0 if v == 0 else abs(v) | ((v < 0) << (n_bytes * 8 - 1))
+    # Serialize to bytes
+    return encoded_v.to_bytes(n_bytes, 'little')
 
 _opcode_instances = []
 class CScriptOp(int):
