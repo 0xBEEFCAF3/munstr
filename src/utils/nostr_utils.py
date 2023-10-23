@@ -3,6 +3,9 @@ import logging
 import ssl
 import time
 import uuid
+import requests
+import sys
+import random
 
 from nostr.event import  Event, EventKind
 from nostr.filter import Filter, Filters
@@ -13,6 +16,22 @@ from nostr.relay_manager import RelayManager
 from src.utils.payload import PayloadKeys
 
 NOSTR_RELAYS = ["wss://nostr-pub.wellorder.net", "wss://relay.damus.io"]
+NOSTR_WATCH = "https://api.nostr.watch/v1/online"
+
+def shuffle_relays():
+    if (input(f"Default relays: {NOSTR_RELAYS}\nShuffle more relays? y/n ")) == 'y':
+        r = (requests.get(NOSTR_WATCH, {})).json()
+        while(1):
+            new_relays = [x for x in r[:15] if 'damus' not in x and 'nostr-pub.wellorder' not in x]
+
+            if (ans := input(f"New online relays found:\n{new_relays}\nIs that OK? y/n/r (n to go back to original, r to reshuffle) ")) == 'y':
+                for val in new_relays: 
+                    NOSTR_RELAYS.append(val)
+                break
+            elif ans == 'r':
+                random.shuffle(r)
+            elif ans == 'n':
+                break
 
 def add_relays():
     relay_manager = RelayManager()
@@ -77,7 +96,7 @@ def read_nsec(nsec_file_name):
             public_key = private_key.public_key.hex()
             logging.info("[nostr] My public key: %s", public_key)
             return private_key, public_key
-        except(error):
+        except Exception:
             logging.error("[nostr] Unexpected error reading nsec from %s", nsec_file_name)
             sys.exit(1)
 
@@ -87,7 +106,7 @@ def read_public_keys(file_name):
         try:
             lines = f.readlines()
             return [line.strip() for line in lines]
-        except(error):
+        except Exception:
             logging.error("[nostr] Unexpected error reading public keys from %s", file_name)
             sys.exit(1)
 
