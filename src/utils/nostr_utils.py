@@ -18,22 +18,19 @@ from src.utils.payload import PayloadKeys
 NOSTR_RELAYS = ["wss://nostr-pub.wellorder.net", "wss://relay.damus.io"]
 NOSTR_WATCH = "https://api.nostr.watch/v1/online"
 
-def shuffle_relays():
-    if (input(f"Default relays: {NOSTR_RELAYS}\nShuffle more relays? y/n ")) == 'y':
-        r = (requests.get(NOSTR_WATCH, {})).json()
-        while(1):
-            new_relays = [x for x in r[:15] if 'damus' not in x and 'nostr-pub.wellorder' not in x]
+def show_relays():
+    r = (requests.get(NOSTR_WATCH, {})).json()
+    new_relays = [x for x in r[:20] if 'damus' not in x and 'nostr-pub.wellorder' not in x]
+    new_relays_rows = [[new_relays[i+k] for i in range(4)] for k in range(0,len(new_relays)-4,4)]
+    col_width = max(len(word) for row in new_relays_rows for word in row) + 2
+    for row in new_relays_rows:
+        print("".join(word.ljust(col_width) for word in row))
 
-            if (ans := input(f"New online relays found:\n{new_relays}\nIs that OK? y/n/r (n to go back to original, r to reshuffle) ")) == 'y':
-                for val in new_relays: 
-                    NOSTR_RELAYS.append(val)
-                break
-            elif ans == 'r':
-                random.shuffle(r)
-            elif ans == 'n':
-                break
+def add_relays(relays):
+    if relays is not None:
+        for r in relays:
+            NOSTR_RELAYS.append(r)
 
-def add_relays():
     relay_manager = RelayManager()
     [relay_manager.add_relay(relay) for relay in NOSTR_RELAYS]
 

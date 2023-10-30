@@ -1,7 +1,7 @@
 from colorama import Fore
 
 from src.signer.wallet import Wallet
-from src.utils.nostr_utils import generate_nostr_message, add_relays, construct_and_publish_event, init_relay_manager, read_nsec, read_public_keys
+from src.utils.nostr_utils import show_relays, generate_nostr_message, add_relays, construct_and_publish_event, init_relay_manager, read_nsec, read_public_keys
 from src.utils.payload import is_valid_json, is_valid_payload
 
 from enum import Enum
@@ -223,10 +223,16 @@ def setup_logging():
     logging.getLogger().setLevel(logging.INFO)
     logging.info(Fore.RED + header)
 
-def run_signer(wallet_id=None, key_pair_seed=None, nonce_seed=None):
+def run_signer(show, relays, wallet_id=None, key_pair_seed=None, nonce_seed=None):
+
     setup_logging()
 
-    relay_manager = add_relays()
+    if show:
+        print("----- ACTIVE RELAYS -----\n")
+        show_relays()
+        exit()
+
+    relay_manager = add_relays(relays)
     nostr_private_key, nostr_public_key = read_nsec('src/signer/nsec.txt')
 
     # get the public keys for the coordinator so we can subscribe to messages from them

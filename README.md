@@ -85,10 +85,16 @@ Coordinators act as a mediator between digital signers and wallets.  The coordin
     ```
     ./start_coordinator.py
     ```
+Possible arguments:
+
+- `--show`: Show active relays via [nostr watch](https://nostr.watch/relays/find)
+- `--add`: Add new relays ex: ``` ./start_coordinator --add [relay1] [relay2] ...```
 
 ### Running a signer
 
-`./start_signer.py`
+``` 
+./start_signer.py
+```
 
 
 Possible arguments:
@@ -96,6 +102,8 @@ Possible arguments:
 - `--wallet_id`: The coordinator persists wallets by ID with some associated information. Default is none.
 - `--key_seed`: An optional seed to use when initializing the signer's keys. Not recommended for anything other than testing.
 - `--nonce_seed`: An optional seed to use when creating nonces. Not recommended for anything other than testing.
+- `--show`: Show active relays via [nostr watch](https://nostr.watch/relays/find)
+- `--add`: Add new relays ex: ``` ./start_signer -add [relay1] [relay2] ...```
 
 ### Completing an end-to-end test
 
