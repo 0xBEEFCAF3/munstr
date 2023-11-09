@@ -17,10 +17,11 @@ from src.utils.payload import PayloadKeys
 
 NOSTR_RELAYS = ["wss://nostr-pub.wellorder.net", "wss://relay.damus.io"]
 NOSTR_WATCH = "https://api.nostr.watch/v1/online"
+NEW_RELAYS = 20
 
 def show_relays():
     r = (requests.get(NOSTR_WATCH, {})).json()
-    new_relays = [x for x in r[:20] if 'damus' not in x and 'nostr-pub.wellorder' not in x]
+    new_relays = [x for x in r[:NEW_RELAYS] if 'damus' not in x and 'nostr-pub.wellorder' not in x]
     new_relays_rows = [[new_relays[i+k] for i in range(4)] for k in range(0,len(new_relays)-4,4)]
     col_width = max(len(word) for row in new_relays_rows for word in row) + 2
     for row in new_relays_rows:
