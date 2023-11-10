@@ -20,7 +20,11 @@ NOSTR_WATCH = "https://api.nostr.watch/v1/online"
 NEW_RELAYS = 20
 
 def show_relays():
-    r = (requests.get(NOSTR_WATCH, {})).json()
+    try:
+        r = (requests.get(NOSTR_WATCH, {})).json()
+    except Exception as e:
+        print(f"nostr_watch API error: {e}\nOption not available at the moment.")
+        exit()
     new_relays = [x for x in r[:NEW_RELAYS] if 'damus' not in x and 'nostr-pub.wellorder' not in x]
     new_relays_rows = [[new_relays[i+k] for i in range(4)] for k in range(0,len(new_relays)-4,4)]
     col_width = max(len(word) for row in new_relays_rows for word in row) + 2
