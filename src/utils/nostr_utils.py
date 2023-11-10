@@ -3,6 +3,9 @@ import logging
 import ssl
 import time
 import uuid
+import requests
+import sys
+import random
 
 from nostr.event import  Event, EventKind
 from nostr.filter import Filter, Filters
@@ -13,8 +16,26 @@ from nostr.relay_manager import RelayManager
 from src.utils.payload import PayloadKeys
 
 NOSTR_RELAYS = ["wss://nostr-pub.wellorder.net", "wss://relay.damus.io"]
+NOSTR_WATCH = "https://api.nostr.watch/v1/online"
+NEW_RELAYS = 20
 
-def add_relays():
+def show_relays():
+    try:
+        r = (requests.get(NOSTR_WATCH, {})).json()
+    except Exception as e:
+        print(f"nostr_watch API error: {e}\nOption not available at the moment.")
+        exit()
+    new_relays = [x for x in r[:NEW_RELAYS] if 'damus' not in x and 'nostr-pub.wellorder' not in x]
+    new_relays_rows = [[new_relays[i+k] for i in range(4)] for k in range(0,len(new_relays)-4,4)]
+    col_width = max(len(word) for row in new_relays_rows for word in row) + 2
+    for row in new_relays_rows:
+        print("".join(word.ljust(col_width) for word in row))
+
+def add_relays(relays):
+    if relays is not None:
+        for r in relays:
+            NOSTR_RELAYS.append(r)
+
     relay_manager = RelayManager()
     [relay_manager.add_relay(relay) for relay in NOSTR_RELAYS]
 
@@ -77,7 +98,7 @@ def read_nsec(nsec_file_name):
             public_key = private_key.public_key.hex()
             logging.info("[nostr] My public key: %s", public_key)
             return private_key, public_key
-        except(error):
+        except Exception:
             logging.error("[nostr] Unexpected error reading nsec from %s", nsec_file_name)
             sys.exit(1)
 
@@ -87,7 +108,7 @@ def read_public_keys(file_name):
         try:
             lines = f.readlines()
             return [line.strip() for line in lines]
-        except(error):
+        except Exception:
             logging.error("[nostr] Unexpected error reading public keys from %s", file_name)
             sys.exit(1)
 

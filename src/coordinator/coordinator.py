@@ -4,7 +4,7 @@ import time
 
 from colorama import Fore
 
-from src.utils.nostr_utils import add_relays, construct_and_publish_event, generate_nostr_message, init_relay_manager, read_nsec, read_public_keys
+from src.utils.nostr_utils import show_relays, add_relays, construct_and_publish_event, generate_nostr_message, init_relay_manager, read_nsec, read_public_keys
 from src.utils.payload import is_valid_json, is_valid_payload, PayloadKeys
 from src.coordinator.wallet import add_xpub, create_wallet, is_valid_command, get_address, save_nonce, start_spend, save_signature
 from src.coordinator.db import DB
@@ -37,13 +37,18 @@ def setup_logging():
     logging.getLogger().setLevel(logging.INFO)
     logging.info(Fore.GREEN + header)
 
-def run():
+def run(show, relays):
     setup_logging()
 
     # start up the db
     db = DB('src/coordinator/db.json')
 
-    relay_manager = add_relays()
+    if show:
+        print("----- ACTIVE RELAYS -----\n")
+        show_relays()
+        exit()
+
+    relay_manager = add_relays(relays)
     nostr_private_key, nostr_public_key = read_nsec('src/coordinator/nsec.txt')
 
     # get the public keys for the signers so we can subscribe to messages from them

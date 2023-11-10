@@ -2,3 +2,5 @@ bip32
 nostr
 colorama
 python-bitcoinlib
+requests
+random
